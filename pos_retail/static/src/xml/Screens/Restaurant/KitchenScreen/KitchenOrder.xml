@@ -36,9 +36,9 @@
             </div>
             <div class="pos-receipt-title">
                 <span class="order_times">
-                    Time: <t t-esc="props.order.time.hours" /> : <t t-esc="props.order.time.minutes"/>
+                    Order Time: <t t-esc="props.order.time.hours" /> : <t t-esc="props.order.time.minutes"/>
                 </span>
-                <span class="delayed_times" t-if="props.order.state != 'Done'" style="float: left">
+                <span class="delayed_times" t-if="props.order.state != 'Done'">
                     <KitchenProcessingTimes order="props.order"/>
                 </span>
             </div>

@@ -22,7 +22,7 @@
                 Total Items : <t t-esc="props.order.total_items"/>
             </div>
             <div class="pos-receipt-title">
-                Ready Transfer Items : <span class="ready_notification"><t t-esc="props.order.ready_transfer_items"/></span>
+                Ready Transfer Items : <t t-esc="props.order.ready_transfer_items"/>
             </div>
             <div class="buttons">
                 <span class="btn" t-on-click="openOrder" t-if="env.pos.config.screen_type != 'kitchen'">

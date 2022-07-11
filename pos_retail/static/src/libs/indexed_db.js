@@ -8,7 +8,8 @@ odoo.define('pos_retail.indexedDB', function (require) {
     var Backbone = window.Backbone;
 
     var multi_database = Backbone.Model.extend({
-        initialize: function (session) {
+        initialize: function (pos, session) {
+            this.pos = pos
             this.session = session;
             this.data_by_model = {}
         },
@@ -132,7 +133,7 @@ odoo.define('pos_retail.indexedDB', function (require) {
             });
             return loaded
         },
-        search_read: function (table_name, sequence) {
+        search_read: async function (table_name, sequence) {
             const self = this;
             return new Promise(function (resolve, reject) {
                 self.init(table_name, sequence).then(function (store) {
@@ -148,22 +149,24 @@ odoo.define('pos_retail.indexedDB', function (require) {
                 });
             })
         },
-        save_results: function (model, results) {
-            if (!this.data_by_model[model]) {
-                this.data_by_model[model] = results
-            } else {
-                this.data_by_model[model] = this.data_by_model[model].concat(results)
-            }
-        },
-        get_datas: function (model, max_sequence) {
+        // save_results: function (model, results) {
+        //     if (!this.data_by_model[model]) {
+        //         this.data_by_model[model] = results
+        //     } else {
+        //         this.data_by_model[model] = this.data_by_model[model].concat(results)
+        //     }
+        //     this.pos.save_results(model, results)
+        // },
+        get_datas: async function (model, max_sequence) {
             const self = this;
             if (model != 'cached') {
                 var loaded = new Promise(function (resolve, reject) {
-                    function load_data(sequence) {
+                    async function load_data(sequence) {
                         if (sequence < max_sequence) {
-                            self.search_read(model, sequence).then(function (results) {
+                            await self.search_read(model, sequence).then(function (results) {
                                 if (results.length > 0) {
-                                    self.save_results(model, results);
+                                    // self.save_results(model, results);
+                                    self.pos.save_results(model, results)
                                 }
                             }).then(function () {
                                 sequence += 1;

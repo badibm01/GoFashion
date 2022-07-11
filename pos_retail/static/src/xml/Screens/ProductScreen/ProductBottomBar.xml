@@ -11,40 +11,40 @@
                         <i class="fa fa-shopping-cart" aria-hidden="true"/>
                     </span>
                 </button>
-                <button class="button set-customer"
-                        t-att-class="{
-                            'decentered': isLongName,
-                            'oe_hidden': env.session.restaurant_order or !env.pos.config.allow_customer,
-                            'highlight': isCustomerSet
-                        }"
-                        t-on-click="trigger('click-customer')">
-                    <i class="fa fa-user" role="img" aria-label="Customer" title="Customer"
-                       style="float: left"/>
-                    <span> </span>
-                    <t t-if="client">
-                        <t t-esc="client.name"/>
-                        <t t-if="!env.isMobile">
-                            <span class="shortcut-keyboard">
-                                <i class="fa fa-keyboard-o"/>
-                                C
-                            </span>
-                        </t>
-                    </t>
-                    <t t-else="">
-                        Customers Screen
-                        <t t-if="!env.isMobile">
-                            <span class="shortcut-keyboard">
-                                <i class="fa fa-keyboard-o"/>
-                                C
-                            </span>
-                        </t>
-                    </t>
-                    <i t-if="client and env.pos.config.update_client"
-                       class="fa fa-edit" role="img"
-                       aria-label="Customer" title="Customer"
-                       t-on-click.stop="editCustomer(client)"
-                       style="float: right"/>
-                </button>
+<!--                <button class="button set-customer"-->
+<!--                        t-att-class="{-->
+<!--                            'decentered': isLongName,-->
+<!--                            'oe_hidden': env.session.restaurant_order or !env.pos.config.allow_customer,-->
+<!--                            'highlight': isCustomerSet-->
+<!--                        }"-->
+<!--                        t-on-click="trigger('click-customer')">-->
+<!--                    <i class="fa fa-user" role="img" aria-label="Customer" title="Customer"-->
+<!--                       style="float: left"/>-->
+<!--                    <span> </span>-->
+<!--                    <t t-if="client">-->
+<!--                        <t t-esc="client.name"/>-->
+<!--                        <t t-if="!env.isMobile">-->
+<!--                            <span class="shortcut-keyboard">-->
+<!--                                <i class="fa fa-keyboard-o"/>-->
+<!--                                C-->
+<!--                            </span>-->
+<!--                        </t>-->
+<!--                    </t>-->
+<!--                    <t t-else="">-->
+<!--                        Customers Screen-->
+<!--                        <t t-if="!env.isMobile">-->
+<!--                            <span class="shortcut-keyboard">-->
+<!--                                <i class="fa fa-keyboard-o"/>-->
+<!--                                C-->
+<!--                            </span>-->
+<!--                        </t>-->
+<!--                    </t>-->
+<!--                    <i t-if="client and env.pos.config.update_client"-->
+<!--                       class="fa fa-edit" role="img"-->
+<!--                       aria-label="Customer" title="Customer"-->
+<!--                       t-on-click.stop="editCustomer(client)"-->
+<!--                       style="float: right"/>-->
+<!--                </button>-->
                 <div class="pos-search-bar quickly-search-customer">
                     <div class="search">
                         <span t-att-badge="state.countCustomers" class="with-badge search-icon"

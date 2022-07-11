@@ -6,7 +6,7 @@
 {
     "price": "600",
     "name": "POS All-In-One(PRO)",
-    "version": "1.6.2.7",
+    "version": "1.6.5",
     "category": "Point of Sale",
     "author": "TL Technology",
     "summary":

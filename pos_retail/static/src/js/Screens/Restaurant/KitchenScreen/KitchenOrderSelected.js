@@ -57,12 +57,9 @@ odoo.define('pos_retail.KitchenOrderSelected', function (require) {
 
         sync() {
             this.env.pos.pos_bus.send_notification({
-                action: 'request_printer',
-                data: {
-                    uid: this.props.order.uid,
-                    computeChanges: this.props.order,
-                },
-                order_uid: this.props.order.uid,
+                action: 'request_printer', data: {
+                    uid: this.props.order.uid, computeChanges: this.props.order,
+                }, order_uid: this.props.order.uid,
             })
         }
 
@@ -70,67 +67,24 @@ odoo.define('pos_retail.KitchenOrderSelected', function (require) {
             let orderRequest = this.props.order;
             const self = this;
             this.sync()
-            var printers = this.env.pos.printers;
-            if (!printers || printers.length == 0) {
-                return this.env.pos.alert_message({
-                    title: this.env._t('Error'),
-                    body: this.env._t('You pos not set Order PRINTERs')
-                })
-            }
-            let printerNetwork = printers.find((p) => p.printer_type == 'network')
-            let printerViaPOSBOX = this.env.pos.config.proxy_ip && this.env.pos.config.iface_print_via_proxy
-            if (!printerNetwork && !printerViaPOSBOX) { // todo: if pos not set proxy ip or printer network we return back odoo original
-                this.env.pos.alert_message({
-                    title: this.env._t('Warning'),
-                    body: this.env._t('Your POS Config not setup POSBOX or IOT Boxes')
-                })
-            } else {
-                let epson_printer = null;
-                for (var i = 0; i < printers.length; i++) {
-                    var printer = printers[i];
-                    if (orderRequest['new'].length > 0 || orderRequest['cancelled'].length > 0) {
-                        var receipt = Qweb.render('OrderChangeReceipt', {changes: order, widget: this});
-                        if (!printer.config.printer_id) {
-                            printers[i].print(receipt);
-                        } else {
-                            var epson_printer_will_connect = this.env.pos.epson_priner_by_id[printer.config.printer_id[0]];
-                            epson_printer = _.find(this.env.pos.epson_printers, function (epson_printer) {
-                                return epson_printer['ip'] == epson_printer_will_connect['ip'] && epson_printer['state'] == 'Online'
-                            });
-                            if (epson_printer) {
-                                this.env.pos.print_network(receipt, epson_printer['ip'])
-                            }
+            const printers = this.env.pos.printers;
+            if (orderRequest['uid']) {
+                if (printers && printers.length) {
+                    for (var i = 0; i < printers.length; i++) {
+                        if (orderRequest['new'].length > 0 || orderRequest['cancelled'].length > 0) {
+                            let receipt = Qweb.render('OrderChangeReceipt', {changes: orderRequest, widget: this});
+                            await printers[i].print_receipt(receipt);
                         }
                     }
                 }
-            }
-            if (orderRequest['uid']) {
-                const order = this.env.pos.get_order_by_uid(orderRequest['uid'])
-                if (order) {
-                    const fixture = document.createElement('div');
-                    const orderReceipt = new (Registries.Component.get(OrderReceipt))(this, {order, orderRequest});
-                    await orderReceipt.mount(fixture);
-                    const receiptHtml = orderReceipt.el.outerHTML;
-                    this.showScreen('ReportScreen', {
-                        report_html: receiptHtml,
-                        report_xml: null,
-                        orderRequest: orderRequest
-                    });
-                    if (orderRequest['state'] == 'PAID') {
-                        this.env.db.remove_order(order.id);
-                        order.destroy({'reason': 'abandon'});
-                    }
-                    this.env.pos.alert_message({
-                        title: this.env._t('Ticket Number'),
-                        body:  orderRequest['ticket_number'] + this.env._t(' Done !!!'),
-                        timer: 5000,
-                    })
-                } else {
-                    this.env.pos.alert_message({
-                        title: this.env._t('Warning'),
-                        body: this.env._t('Order not found, it have Paid or Remove before')
-                    })
-                }
+                let receipt = Qweb.render('OrderChangeReceipt', {changes: orderRequest, widget: this});
+                this.showScreen('ReportScreen', {
+                    report_html: receipt, report_xml: null, orderRequest: orderRequest
+                });
+            } else {
+                this.env.pos.alert_message({
+                    title: this.env._t('Warning'), body: this.env._t('Order not found, it have Paid or Remove before')
+                })
             }
         }
 

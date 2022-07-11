@@ -123,7 +123,13 @@ odoo.define('pos_retail.PaymentScreen', function (require) {
                     })
                 }
                 this._saveOrderJson([this._currentOrder.export_as_JSON()])
-                return super.validateOrder(isForceValidate)
+                if (this._currentOrder && !this._currentOrder.is_paid()) {
+                    return this.showPopup('ErrorPopup', {
+                        title: this.env._t('Warning'),
+                        body: this.env._t('Please full fill payment Amount'),
+                    })
+                }
+                return  super.validateOrder(isForceValidate)
             }
 
             async addTip() {

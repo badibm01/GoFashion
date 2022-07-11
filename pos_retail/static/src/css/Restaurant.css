@@ -164,7 +164,7 @@
     overflow: hidden;
     overflow-y: auto;
     flex-grow: 1;
-    height: 100%;
+    height: 90%;
 }
 
 .pos .kitchen-left-pane {
@@ -176,11 +176,13 @@
     background: inherit;
     overflow: hidden;
     overflow-y: auto;
+    height: 90%;
 }
 
 .pos .kitchen-box {
     padding: 1.5em;
     margin: 5px;
+    width: 20%;
     position: relative;
     vertical-align: top;
     display: inline-block;
@@ -613,8 +615,7 @@ table .kitchen {
 }
 
 .pos .delayed_times {
-    float: left;
-    display: inline-block;
+    display: table;
 }
 
 .pos .full_box {

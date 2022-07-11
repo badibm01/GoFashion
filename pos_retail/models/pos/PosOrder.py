@@ -198,9 +198,6 @@ class POSOrder(models.Model):
 
     def unlink(self):
         for order in self:
-            if order._is_pos_order_paid():
-                raise UserError(_(
-                    'Not allow remove Order have payment information. Please set to Cancel, Order Ref %s' % order.name))
             if order.state == 'cancel' and order.removed_user_id and not self.env.user.has_group(
                     'point_of_sale.group_pos_manager'):
                 raise UserError(_(
@@ -768,10 +765,11 @@ class POSOrder(models.Model):
                     'payment_method_id': cash_payment_method.id,
                 }
                 order.add_payment(return_payment_vals)
-        for tracking_log in pos_order['tracking_ids']:
-            tracking_log['order_id'] = order.id
-            if tracking_log.get('time_action', None):
-                tracking_log['time_action'] = tracking_log['time_action'].replace('T', ' ')[:19]
+        if pos_order.get('tracking_ids', None):
+            for tracking_log in pos_order['tracking_ids']:
+                tracking_log['order_id'] = order.id
+                if tracking_log.get('time_action', None):
+                    tracking_log['time_action'] = tracking_log['time_action'].replace('T', ' ')[:19]
             self.env['pos.tracking.order'].create(tracking_log)
         return order
 

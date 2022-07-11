@@ -6,12 +6,30 @@ odoo.define('pos_retail.SaleDetailsButton', function (require) {
     const core = require('web.core');
     const qweb = core.qweb;
 
-    const RetailSaleDetailsButton = (SaleDetailsButton) =>
-        class extends SaleDetailsButton {
-            constructor() {
-                super(...arguments);
+    const RetailSaleDetailsButton = (SaleDetailsButton) => class extends SaleDetailsButton {
+        constructor() {
+            super(...arguments);
+        }
+
+        async onClick() {
+            if (this.env.pos.proxy.printer) {
+                return await super.onClick()
+            } else {
+                const saleDetails = await this.rpc({
+                    model: 'report.point_of_sale.report_saledetails',
+                    method: 'get_sale_details',
+                    args: [false, false, false, [this.env.pos.pos_session.id]],
+                });
+                const report = this.env.qweb.renderToString('SaleSummaryOfCurrentSessionReport', Object.assign({}, saleDetails, {
+                    date: new Date().toLocaleString(), pos: this.env.pos,
+                }));
+                this.showScreen('ReportScreen', {
+                    report_html: report,
+                    report_xml: null
+                })
             }
         }
+    }
     Registries.Component.extend(SaleDetailsButton, RetailSaleDetailsButton);
 
     return RetailSaleDetailsButton;

@@ -49,7 +49,9 @@ odoo.define('pos_retail.restaurant', function (require) {
                     self.floors.push(floor_have_order_checkedin)
                     self.floors_by_id[0] = floor_have_order_checkedin
                 }
-                self.floors = self.floors.sort(function(a,b){ return a.sequence - b.sequence; });
+                self.floors = self.floors.sort(function (a, b) {
+                    return a.sequence - b.sequence;
+                });
             };
             var restaurant_table_model = this.get_model('restaurant.table');
             restaurant_table_model.fields.push('locked', 'user_ids', 'pricelist_id')
@@ -77,18 +79,14 @@ odoo.define('pos_retail.restaurant', function (require) {
             };
             _super_posmodel.initialize.apply(this, arguments);
             setTimeout(() => this.automatic_print_request_of_waiters(), 10000);
-        },
-        async unlock_table() {
+        }, async unlock_table() {
             var self = this;
             let resultUnLock = await rpc.query({
-                model: 'restaurant.table',
-                method: 'lock_table',
-                args: [[this.table_click.id], {
+                model: 'restaurant.table', method: 'lock_table', args: [[this.table_click.id], {
                     'locked': false,
                 }],
             }, {
-                timeout: 30000,
-                shadow: true,
+                timeout: 30000, shadow: true,
             })
             if (resultUnLock) {
                 this.table_click['locked'] = false;
@@ -104,24 +102,26 @@ odoo.define('pos_retail.restaurant', function (require) {
                             table_id: order_of_table.table.id,
                             order_uid: order_of_table.uid,
                             lock: false,
-                        },
-                        action: 'lock_table',
-                        order_uid: order_of_table.uid,
+                        }, action: 'lock_table', order_uid: order_of_table.uid,
                     })
                 }
             }
-        },
-        /// ======================== FORCE CORE ODOO (KIMANH) =========================//
-        // todo: stop sync direct to odoo server. We no need this feature
+        }, // ----------------------------------
+        // TODO: remove core method Odoo, Odoo call backend server for sync direct
+        // - So: if our feature active, no need Core Odoo sync
+        // ----------------------------------
         _get_from_server: function (table_id, options) { // GET drafts order with this table ID
             return Promise.resolve([]);
         },
+
         sync_from_server: function (table, table_orders, order_ids) { // save draft orders to server
-            this.clean_table_transfer(table);
+            return this.clean_table_transfer(table)
         },
-        sync_to_server: function (table, order) { // set order[1] to Table
-            return this.set_order_on_table(order);
+
+        sync_to_server: function (table, order) {
+            return this.set_order_on_table(order)
         },
+
         async set_table(table, order) {
             const self = this;
             if (table && table.locked) {
@@ -141,13 +141,9 @@ odoo.define('pos_retail.restaurant', function (require) {
             if (order_to_transfer_to_different_table && table && this.pos_bus) {
                 order_to_transfer_to_different_table.syncing = true
                 this.pos_bus.send_notification({
-                    action: 'order_transfer_new_table',
-                    data: {
-                        uid: order_to_transfer_to_different_table.uid,
-                        table_id: table.id,
-                        floor_id: table.floor_id[0],
-                    },
-                    order_uid: order_to_transfer_to_different_table.uid,
+                    action: 'order_transfer_new_table', data: {
+                        uid: order_to_transfer_to_different_table.uid, table_id: table.id, floor_id: table.floor_id[0],
+                    }, order_uid: order_to_transfer_to_different_table.uid,
                 });
                 order_to_transfer_to_different_table.syncing = false
             }
@@ -170,8 +166,7 @@ odoo.define('pos_retail.restaurant', function (require) {
             if (table && selectedOrder) {
                 posbus.trigger('set-screen', 'Products')
             }
-        },
-        /// ======================== END FORECE =========================//
+        }, /// ======================== END Force Odoo =========================//
 
         load_server_data: function () {
             var self = this;
@@ -179,13 +174,11 @@ odoo.define('pos_retail.restaurant', function (require) {
             return _super_posmodel.load_server_data.apply(this, arguments).then(function () {
                 self.config.iface_floorplan = self.floors.length;
             });
-        },
-        // TODO: play sound when new transaction coming
+        }, // TODO: play sound when new transaction coming
         play_sound: function () {
             var src = "/pos_retail/static/src/sounds/demonstrative.mp3";
             $('body').append('<audio src="' + src + '" autoplay="true"></audio>');
-        },
-        // TODO: sync between sesion on restaurant
+        }, // TODO: sync between sesion on restaurant
         get_notifications: function (message) {
             var action = message['action'];
             // if (this.config.screen_type && this.config.screen_type == 'kitchen' && ['order_transfer_new_table', 'request_printer', 'transfer_succeed_receipt', 'paid_order', 'unlink_order'].indexOf(action) == -1) {
@@ -224,9 +217,7 @@ odoo.define('pos_retail.restaurant', function (require) {
             }
             if (action == 'cashier_activity' && this.session.restaurant_order && this.get_order_by_uid(message['order_uid'])) {
                 this.chrome.showPopup('ConfirmPopup', {
-                    title: this.env._t('Alert'),
-                    body: message['data'],
-                    disableCancelButton: true,
+                    title: this.env._t('Alert'), body: message['data'], disableCancelButton: true,
                 })
             }
             if (action == 'request_printer' && this.session.restaurant_order && this.get_order_by_uid(message['order_uid'])) {
@@ -242,8 +233,7 @@ odoo.define('pos_retail.restaurant', function (require) {
                 }
             }
             posbus.trigger('save-receipt', {})
-        },
-        async sync_new_qrcode_order(orderJson) {
+        }, async sync_new_qrcode_order(orderJson) {
             var order = this.get_order_by_uid(orderJson['uid']);
             if (order) {
                 return this.sync_new_order(orderJson)
@@ -265,8 +255,7 @@ odoo.define('pos_retail.restaurant', function (require) {
                     }
                 }
             }
-        },
-        // TODO: neu la man hinh nha bep / bar
+        }, // TODO: neu la man hinh nha bep / bar
         //         - khong quan tam no la floor hay table hay pos cashier
         //         - luon luon dong bo vs tat ca
         sync_new_order: function (vals) {
@@ -294,8 +283,7 @@ odoo.define('pos_retail.restaurant', function (require) {
                     return null
                 }
             }
-        },
-        sync_unlink_order: function (uid, action, user) {
+        }, sync_unlink_order: function (uid, action, user) {
             let res;
             if (this.config.screen_type == 'kitchen') {
                 console.log('It a kitchen screen, keep order')
@@ -304,20 +292,14 @@ odoo.define('pos_retail.restaurant', function (require) {
                 res = _super_posmodel.sync_unlink_order.apply(this, arguments);
             }
             posbus.trigger('orderReceiptRemoved', {
-                uid: uid,
-                action: action,
-                user: user
+                uid: uid, action: action, user: user
             })
             return res
-        },
-        sync_transfer_succeed_receipt: function (data) {
+        }, sync_transfer_succeed_receipt: function (data) {
             posbus.trigger('syncTransferSucceedReceipt', {
-                request_time: data.request_time,
-                action: data.action,
-                user: data.user
+                request_time: data.request_time, action: data.action, user: data.user
             })
-        },
-        // TODO: dong bo khi in xong
+        }, // TODO: dong bo khi in xong
         sync_request_printer: async function (vals) { // todo: - update variable set_dirty of line
             const self = this
             const order = this.get_order_by_uid(vals.uid)
@@ -341,17 +323,13 @@ odoo.define('pos_retail.restaurant', function (require) {
                                 for (let x = 0; x < qty_print; x++) {
                                     let orderReceipt = order.buildReceiptKitchen(data);
                                     let receiptHtml = QWeb.render('RetailOrderChangeReceipt', {
-                                        changes: orderReceipt,
-                                        widget: order
+                                        changes: orderReceipt, widget: order
                                     });
                                     // $('.pos-receipt-container').html(receiptHtml);
                                     // window.print()
-                                    this.db.saveRequestPrintFromWaiters([
-                                        {
-                                            'ticket_number': orderReceipt['ticket_number'],
-                                            'receiptHtml': receiptHtml
-                                        }
-                                    ])
+                                    this.db.saveRequestPrintFromWaiters([{
+                                        'ticket_number': orderReceipt['ticket_number'], 'receiptHtml': receiptHtml
+                                    }])
                                     console.log('>>>> save request print of waiter: ' + orderReceipt['ticket_number'])
                                 }
 
@@ -363,17 +341,13 @@ odoo.define('pos_retail.restaurant', function (require) {
                                 for (let x = 0; x < qty_print; x++) {
                                     let orderReceipt = order.buildReceiptKitchen(data);
                                     let receiptHtml = QWeb.render('OrderChangeReceipt', {
-                                        changes: orderReceipt,
-                                        widget: order
+                                        changes: orderReceipt, widget: order
                                     });
                                     // $('.pos-receipt-container').html(receiptHtml);
                                     // window.print()
-                                    this.db.saveRequestPrintFromWaiters([
-                                        {
-                                            'ticket_number': orderReceipt['ticket_number'],
-                                            'receiptHtml': receiptHtml
-                                        }
-                                    ])
+                                    this.db.saveRequestPrintFromWaiters([{
+                                        'ticket_number': orderReceipt['ticket_number'], 'receiptHtml': receiptHtml
+                                    }])
                                     console.log('>>>> save request print of waiter: ' + orderReceipt['ticket_number'])
                                 }
                             }
@@ -437,8 +411,7 @@ odoo.define('pos_retail.restaurant', function (require) {
                 }
             }
             posbus.trigger('orderTransferTable', vals); // trigger kitchen screen
-        },
-        // TODO: dong bo tong so khach hang tren ban
+        }, // TODO: dong bo tong so khach hang tren ban
         sync_set_customer_count: function (vals) { // update count guest
             var order = this.get_order_by_uid(vals.uid);
             if (order) {
@@ -447,8 +420,7 @@ odoo.define('pos_retail.restaurant', function (require) {
                 order.trigger('change', order);
                 order.syncing = false;
             }
-        },
-        // TODO: dong bo ghi chu cua line
+        }, // TODO: dong bo ghi chu cua line
         sync_set_note: function (vals) {
             var line = this.get_line_by_uid(vals['uid']);
             if (line) {
@@ -470,8 +442,7 @@ odoo.define('pos_retail.restaurant', function (require) {
                 this.take_away_order = json.take_away_order
             }
             return this
-        },
-        export_as_JSON: function () {
+        }, export_as_JSON: function () {
             var json = _super_order.export_as_JSON.apply(this, arguments);
             if (this.notify_messages) {
                 json.notify_messages = this.notify_messages;
@@ -483,8 +454,7 @@ odoo.define('pos_retail.restaurant', function (require) {
                 json.take_away_order = this.take_away_order
             }
             return json;
-        },
-        get_lines_missed_request_kitchen: function () {
+        }, get_lines_missed_request_kitchen: function () {
             var delivery_kitchen = false;
             this.orderlines.each(function (line) {
                 if (line['state'] == 'Draft' || line['state'] == 'Priority') {
@@ -492,8 +462,7 @@ odoo.define('pos_retail.restaurant', function (require) {
                 }
             });
             return delivery_kitchen;
-        },
-        get_lines_need_delivery: function () {
+        }, get_lines_need_delivery: function () {
             var need_delivery = false;
             this.orderlines.each(function (line) {
                 if (line['state'] == 'Ready') {
@@ -501,23 +470,18 @@ odoo.define('pos_retail.restaurant', function (require) {
                 }
             });
             return need_delivery;
-        },
-        set_customer_count: function (count) { //sync to other sessions
+        }, set_customer_count: function (count) { //sync to other sessions
             var res = _super_order.set_customer_count.apply(this, arguments)
             if ((this.syncing == false || !this.syncing) && this.pos.pos_bus) {
                 var order = this.export_as_JSON();
                 this.pos.pos_bus.send_notification({
-                    action: 'set_customer_count',
-                    data: {
-                        uid: this.uid,
-                        count: count
-                    },
-                    order_uid: order['uid'],
+                    action: 'set_customer_count', data: {
+                        uid: this.uid, count: count
+                    }, order_uid: order['uid'],
                 });
             }
             return res
-        },
-        _update_last_call_printers_buy_orderline_uid: function () {
+        }, _update_last_call_printers_buy_orderline_uid: function () {
             for (var uid in this.last_call_printers_buy_orderline_uid) {
                 var line_need_update = _.find(this.orderlines.models, function (line) {
                     return line.uid == uid
@@ -529,8 +493,7 @@ odoo.define('pos_retail.restaurant', function (require) {
                     this.last_call_printers_buy_orderline_uid[uid] = null;
                 }
             }
-        },
-        buildReceiptKitchen(orderReceipt) { // todo: request number and session_id of computeChanges is key unit of request print receipt
+        }, buildReceiptKitchen(orderReceipt) { // todo: request number and session_id of computeChanges is key unit of request print receipt
             const ticket_number = this.pos.db.getKitchenTicketOrderNumber()
             if (this.take_away_order || !orderReceipt.table) { // if clicked to button take away, or pos config have not add table : it mean order is take away
                 orderReceipt['take_away_order'] = true
@@ -570,8 +533,7 @@ odoo.define('pos_retail.restaurant', function (require) {
                 this.cancel_reason = ''
                 this.creation_time = new Date().toLocaleTimeString();
             }
-        },
-        init_from_JSON: function (json) {
+        }, init_from_JSON: function (json) {
             if (json.creation_time) {
                 this.creation_time = json.creation_time;
             }
@@ -582,8 +544,7 @@ odoo.define('pos_retail.restaurant', function (require) {
                 this.cancel_reason = json.cancel_reason;
             }
             _super_order_line.init_from_JSON.apply(this, arguments);
-        },
-        export_as_JSON: function () {
+        }, export_as_JSON: function () {
             var json = _super_order_line.export_as_JSON.apply(this, arguments);
             if (this.kitchen_notes) {
                 json.kitchen_notes = this.kitchen_notes;
@@ -595,8 +556,7 @@ odoo.define('pos_retail.restaurant', function (require) {
                 json.creation_time = this.creation_time;
             }
             return json;
-        },
-        _build_update_data: function () {
+        }, _build_update_data: function () {
             const d = new Date();
             let hours = '' + d.getHours();
             hours = hours.length < 2 ? ('0' + hours) : hours;
@@ -655,15 +615,13 @@ odoo.define('pos_retail.restaurant', function (require) {
                 }
             }
             return new_update;
-        },
-        printable: function () {
+        }, printable: function () {
             if (this.get_product()) {
                 return _super_order_line.printable.apply(this, arguments)
             } else {
                 return null;
             }
-        },
-        set_note: function (note) {
+        }, set_note: function (note) {
             var res = _super_order_line.set_note.apply(this, arguments);
             // if ((this.syncing == false || !this.syncing) && this.pos.pos_bus) {
             //     var order = this.order.export_as_JSON();
@@ -680,8 +638,7 @@ odoo.define('pos_retail.restaurant', function (require) {
                 this.trigger_update_line();
             }
             return res;
-        },
-        get_line_diff_hash: function () {
+        }, get_line_diff_hash: function () {
             var str = this.id + '|';
             if (this.get_note()) {
                 str += this.get_note();
@@ -717,36 +674,26 @@ odoo.define('pos_retail.restaurant', function (require) {
 
         sync_receipt(receipt) { // send receipt update from this session to another session
             this.send_notification({
-                action: 'request_printer',
-                data: {
-                    uid: receipt.uid,
-                    computeChanges: receipt,
-                },
-                order_uid: receipt.uid,
+                action: 'request_printer', data: {
+                    uid: receipt.uid, computeChanges: receipt,
+                }, order_uid: receipt.uid,
             })
         },
 
         transfer_succeed_receipt(receipt, action, user) { // when waiter transfer products succeed, request another sessions drop receipt
             this.send_notification({
-                action: 'transfer_succeed_receipt',
-                data: {
-                    request_time: receipt.request_time,
-                    action: action,
-                    user: user,
-                },
-                order_uid: receipt.uid
+                action: 'transfer_succeed_receipt', data: {
+                    request_time: receipt.request_time, action: action, user: user,
+                }, order_uid: receipt.uid
             })
-        },
-        send_notification: function (value, send_manual = false) {
+        }, send_notification: function (value, send_manual = false) {
             if (this.pos.config.screen_type == 'kitchen' && value.action == 'new_order') {
                 return true // drop notification because we dont need sync notification from kitchen to any sessions with action new_order when start screen
             }
             _super_sync.send_notification.apply(this, arguments);
             if (value.action == 'unlink_order' || value.action == 'paid_order') {
                 posbus.trigger('orderReceiptRemoved', {
-                    uid: value.order_uid,
-                    action: value.action,
-                    user: value.user
+                    uid: value.order_uid, action: value.action, user: value.user
                 })
             }
             posbus.trigger('save-receipt')
@@ -913,8 +860,7 @@ odoo.define('pos_retail.restaurant', function (require) {
             'floor': json.floor || false,
             'name': json.name || 'unknown order',
             'time': {
-                'hours': hours,
-                'minutes': minutes,
+                'hours': hours, 'minutes': minutes,
             },
         };
         this.last_sync.new = this.last_sync.new.filter(n => n.qty > 0)
@@ -1012,8 +958,7 @@ odoo.define('pos_retail.restaurant', function (require) {
                         var product = self.pos.db.get_product_by_id(product_id);
                         if (product) {
                             resume[line_hash]['selected_combo_items'].push({
-                                'product_name': product.display_name,
-                                'quantity': line.selected_combo_items[product_id]
+                                'product_name': product.display_name, 'quantity': line.selected_combo_items[product_id]
                             })
                         }
                     }

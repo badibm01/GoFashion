@@ -176,6 +176,26 @@ odoo.define('pos_retail.KitchenScreen', function (require) {
             let orders = this.state.orders.filter(predicate);
             orders = this.state.orders.filter(predicateTable);
             orders = this.sortOrder(orders)
+            for (let i=0; i < orders.length; i++) {
+                let order = orders[i]
+                let display = false
+                for (let j=0; j < order['new'].length; j++) {
+                    let line = order['new'][j]
+                    display = this.env.pos.db.is_product_in_category(this.env.pos.config.product_categ_ids, line.id)
+                    if (display) {
+                        break
+                    }
+                }
+                for (let j=0; j < order['cancelled'].length; j++) {
+                    let line = order['cancelled'][j]
+                    display = this.env.pos.db.is_product_in_category(this.env.pos.config.product_categ_ids, line.id)
+                    if (display) {
+                        break
+                    }
+                }
+                order['display'] = display
+            }
+            orders = orders.filter((o) => o.display == true)
             return orders
         }
 

@@ -461,7 +461,7 @@ class PosConfig(models.Model):
         default=1
     )
     display_cost_price = fields.Boolean('Display Cost Price', default=0)
-    display_product_ref = fields.Boolean('Display Product Ref', default=0)
+    display_product_ref = fields.Boolean('Display Product Internal Reference', default=0)
     display_margin = fields.Boolean('Display Margin', default=0)
     display_product_second_name = fields.Boolean(
         'Display Product Second Name',
@@ -538,11 +538,6 @@ class PosConfig(models.Model):
         'user_id',
         string='Sellers',
         help='This is list sellers use for choice and add to Order or Order Line')
-    force_seller = fields.Boolean(
-        'Force Seller',
-        help='When Your POS session select/change another Seller \n'
-             'POS auto assigned New Seller to each Line of Order Cart',
-        default=0)
     logo = fields.Binary('Receipt Logo')
     payment_coin = fields.Boolean('Payment Coin')
     payment_coin_ids = fields.Many2many('pos.quickly.payment', string='Coins')
@@ -1041,13 +1036,13 @@ class PosConfig(models.Model):
 
     product_width = fields.Integer(
         'Product Width (em)',
-        default=10,
+        default=8,
         help='Default width of Product box is 18em',
         required=1
     )
     product_height = fields.Integer(
         'Product Height (em)',
-        default=10,
+        default=8,
         help='Default height of Product box is 18em',
         required=1)
     product_margin = fields.Float(
@@ -1067,7 +1062,7 @@ class PosConfig(models.Model):
     )
     product_name_font_size = fields.Integer(
         'Product Name Font Size',
-        default=18,
+        default=13,
         help="Font Size of Product's Name, set between 13 to 20"
     )
     display_mobile_mode = fields.Boolean(
@@ -1089,7 +1084,7 @@ class PosConfig(models.Model):
     cart_width = fields.Integer(
         'Cart List Width (%)',
         help='Width of Cart List, suggest is 40 (%)',
-        default=40
+        default=30
     )
     whatsapp_api = fields.Char('WhatApp Api')
     whatsapp_token = fields.Char('WhatApp Token')

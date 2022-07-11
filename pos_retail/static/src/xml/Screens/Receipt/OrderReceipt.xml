@@ -9,9 +9,9 @@
             <t t-if="env.pos.config.display_barcode and props.line.product.barcode">
                 (<t t-esc="props.line.product.barcode"/>)
             </t>
-            <t t-esc="props.line.product.display_name"/>
+            <t t-esc="props.line.product.display_name.substr(0, 40)"/>
             <t t-if="props.line.product.name_second and env.pos.config.display_product_second_name">
-                <t t-esc="props.line.product.name_second"/>
+                <t t-esc="props.line.product.name_second.substr(0, 40)"/>
             </t>
         </div>
     </t>
@@ -183,7 +183,7 @@
 
 
     <t t-name="RetailOrderReceipt" owl="1">
-        <div class="pos-receipt">
+        <div class="pos-receipt" t-att-style="'width:' + env.pos.config.receipt_fix_width + 'mm'">
             <t t-if="receipt.header_html or receipt.header">
                 <div t-if='receipt.header_html' class="pos-receipt-center-align">
                     <div class="receipt-line">
@@ -559,93 +559,96 @@
                 </t>
             </div>
             <br/>
-            <div class="orderlines">
-                <t t-set="noOfLine" t-value="1"/>
-                <div style="border-bottom: 1px solid #999999;line-height: 30px; font-size: 70%; font-weight: 900">
-                    <span style="width: 10%; display: inline-block; vertical-align: top">
-                        No.
-                    </span>
-                    <span style="width: 20%; display: inline-block; vertical-align: top">
+            <table class='summary-table report-small'>
+                <colgroup>
+                    <col width='50%'/>
+                    <col width='10%'/>
+                    <col width='15%'/>
+                    <col width='25%'/>
+                </colgroup>
+                <tr class="receipt-line">
+                    <td style="text-align: left">
+                        Item
+                    </td>
+                    <td style="text-align: center">
                         Qty
-                    </span>
-                    <span style="width: 20%; display: inline-block; vertical-align: top">
-                        Unit
-                    </span>
-                    <span style="width: 20%; display: inline-block; text-align: right; vertical-align: top">
+                    </td>
+                    <td style="text-align: center">
                         Price
-                    </span>
-                    <span style="width: 30%; display: inline-block; text-align: right; vertical-align: top">
+                    </td>
+                    <td style="text-align: center">
                         Total
-                    </span>
-                </div>
+                    </td>
+                </tr>
+                <t t-set="noOfLine" t-value="1"/>
                 <t t-if="!receipt.orderlines_by_category_name">
-                    <t t-foreach='orderlines' t-as='line' t-key="line.id">
-                        <div>
-                            <ReceiptProductName line="line" noOfLine="noOfLine"/>
-                            <OrderReceiptLineExtra line="line"/>
-                        </div>
-                        <div class="orderline-detail">
-                            <span style="width: 10%; display: inline-block; vertical-align: top">
-                                <t t-esc="noOfLine"/>
-                            </span>
-                            <span style="width: 20%; display: inline-block; vertical-align: top">
+                    <t t-foreach="orderlines" t-as="line" t-key="line.id">
+                        <tr class="receipt-line">
+                            <td style="text-align: left">
+                                <ReceiptProductName line="line" noOfLine="noOfLine"/>
+                                <OrderReceiptLineExtra line="line"/>
+                            </td>
+                            <td style="text-align: center" class="product-line-name">
                                 <t t-esc="env.pos.format_currency_no_symbol(line.quantity)"/>
-                            </span>
-                            <span style="width: 20%; display: inline-block; vertical-align: top">
-                                <t t-esc="line.get_unit()['name']"/>
-                            </span>
-                            <span style="width: 20%; display: inline-block; text-align: right; vertical-align: top">
+                                <t t-if="line.get_unit()['name'] != 'Units'">
+                                    <span> <t t-esc="line.get_unit()['name']"/></span>
+                                </t>
+                            </td>
+                            <td style="text-align: right" class="product-line-name">
                                 <span><t t-esc="env.pos.format_currency_no_symbol(line.price)"/></span>
                                 <t t-if="env.pos.config.display_tax_receipt and line.get_tax() > 0">
                                     <div class="product-line-name" style="font-size: 50% !important">
                                         Taxes: <t t-esc="env.pos.format_currency_no_symbol(line.get_tax())"/>
                                     </div>
                                 </t>
-                            </span>
-                            <span style="width: 30%; display: inline-block; text-align: right; vertical-align: top">
+                            </td>
+                            <td style="text-align: right" class="product-line-name">
                                 <t t-esc="env.pos.format_currency_no_symbol(line.get_price_with_tax())"/>
-                            </span>
-                        </div>
-                        <t t-set="noOfLine" t-value="noOfLine + 1"/>
+                            </td>
+                            <t t-set="noOfLine" t-value="noOfLine + 1"/>
+                        </tr>
                     </t>
                 </t>
                 <t t-else="">
-                    <t t-foreach='receipt.orderlines_by_category_name' t-as='categ' t-key="categ" class="receipt-line">
-                        <div style="border-bottom: 1px dotted; line-height: 20px; font-size: 70%; font-weight: 900">
-                            <t t-esc="categ"/> with <t t-esc="receipt.orderlines_by_category_name[categ].length"/> Items
-                        </div>
+                    <t t-foreach='receipt.orderlines_by_category_name' t-as='categ' t-key="categ">
+                        <tr class="receipt-line">
+                            <td style="width: 100% !important; border-bottom: unset !important; text-align: left">
+                                <t t-esc="categ"/>
+                                - with
+                                <t t-esc="receipt.orderlines_by_category_name[categ].length"/>
+                                Items
+                            </td>
+                        </tr>
                         <t t-foreach='receipt.orderlines_by_category_name[categ]' t-as='line' t-key="line.id">
-                            <div>
-                                <ReceiptProductName line="line" noOfLine="noOfLine"/>
-                                <OrderReceiptLineExtra line="line"/>
-                            </div>
-                            <div class="orderline-detail">
-                                <span style="width: 10%; display: inline-block; vertical-align: top">
-                                    <t t-esc="noOfLine"/>
-                                </span>
-                                <span style="width: 20%; display: inline-block; vertical-align: top">
+                            <tr class="receipt-line">
+                                <td style="text-align: left" class="product-line-name">
+                                    <ReceiptProductName line="line" noOfLine="noOfLine"/>
+                                    <OrderReceiptLineExtra line="line"/>
+                                </td>
+                                <td style="text-align: center" class="product-line-name">
                                     <t t-esc="env.pos.format_currency_no_symbol(line.quantity)"/>
-                                </span>
-                                <span style="width: 20%; display: inline-block; vertical-align: top">
-                                    <t t-esc="line.get_unit()['name']"/>
-                                </span>
-                                <span style="width: 20%; display: inline-block; text-align: right; vertical-align: top">
-                                    <span style="font-weight: 900"><t t-esc="env.pos.format_currency_no_symbol(line.price)"/></span>
+                                    <t t-if="line.get_unit()['name'] != 'Units'">
+                                        <span> <t t-esc="line.get_unit()['name']"/></span>
+                                    </t>
+                                </td>
+                                <td style="text-align: right" class="product-line-name">
+                                    <span><t t-esc="env.pos.format_currency_no_symbol(line.price)"/></span>
                                     <t t-if="env.pos.config.display_tax_receipt and line.get_tax() > 0">
-                                        <div class="product-line-name">
+                                        <div class="product-line-name" style="font-size: 50% !important">
                                             Taxes: <t t-esc="env.pos.format_currency_no_symbol(line.get_tax())"/>
                                         </div>
                                     </t>
-                                </span>
-                                <span style="width: 30%; display: inline-block; text-align: right; vertical-align: top">
+                                </td>
+                                <td style="text-align: right" class="product-line-name">
                                     <t t-esc="env.pos.format_currency_no_symbol(line.get_price_with_tax())"/>
-                                </span>
-                            </div>
-                            <t t-set="noOfLine" t-value="noOfLine + 1"/>
+                                </td>
+                                <t t-set="noOfLine" t-value="noOfLine + 1"/>
+                            </tr>
                         </t>
                     </t>
                 </t>
-            </div>
+
+            </table>
             <t t-set='taxincluded' t-value='Math.abs(receipt.subtotal - receipt.total_with_tax) &lt;= 0.000001'/>
             <t t-if='!taxincluded'>
                 <t t-if="env.pos.config.receipt_display_subtotal">
@@ -669,7 +672,7 @@
                     </t>
                 </t>
             </t>
-            <div class="pos-receipt-amount" style="line-height: 25px">
+            <div class="pos-receipt-amount" style="line-height: 25px; border-bottom: 1px dotted">
                 TOTAL:
                 <span t-esc="env.pos.format_currency(receipt.total_with_tax)" class="pos-receipt-right-align"/>
             </div>
@@ -700,7 +703,7 @@
                     </span>
                 </div>
             </t>
-            <div class="pos-receipt-amount receipt-change"  style="line-height: 25px">
+            <div class="pos-receipt-amount receipt-change" style="line-height: 25px">
                 CHANGE:
                 <span t-esc="env.pos.format_currency(receipt.change)" class="pos-receipt-right-align"/>
                 <t t-if="env.pos.get_order().get_differene_currency_change()">
@@ -708,27 +711,43 @@
                     )
                 </t>
             </div>
-            <t t-if="env.pos.config.receipt_display_taxes">
-                <t t-if='isTaxIncluded'>
+            <t t-if="env.pos.config.receipt_display_taxes and isTaxIncluded">
+                <table class='summary-table report-small'>
+                    <colgroup>
+                        <col width='60%'/>
+                        <col width='40%'/>
+                    </colgroup>
+                    <tr class="receipt-line">
+                        <td style="text-align: left">
+                            Tax Name
+                        </td>
+                        <td style="text-align: right">
+                            Amount
+                        </td>
+                    </tr>
                     <t t-foreach='receipt.tax_details' t-as='tax' t-key="tax.name">
-                        <div class="receipt-line">
-                            <t t-esc='tax.name'/>
-                            <span t-esc='env.pos.format_currency_no_symbol(tax.amount)'
-                                  class="pos-receipt-right-align"/>
-                        </div>
+                        <tr class="receipt-line">
+                            <td style="text-align: left">
+                                <t t-esc='tax.name'/>
+                            </td>
+                            <td style="text-align: right">
+                                <t t-esc="env.pos.format_currency_no_symbol(tax.amount)"/>
+                            </td>
+                        </tr>
                     </t>
-                    <div class="receipt-line" t-if="receipt.total_tax != 0" style="line-height: 25px">
-                        <span class="amount_total">Total Taxes</span>
-                        <span t-esc='env.pos.format_currency_no_symbol(receipt.total_tax)'
-                              class="pos-receipt-right-align"/>
-                    </div>
-                </t>
-                <t t-if="receipt.currency">
-                    <div class="receipt-line" style="line-height: 25px">
+                </table>
+                <div class="receipt-line" t-if="receipt.cashier">
+                    <span>
+                        Total Taxes
+                    </span>
+                    <span t-esc="env.pos.format_currency_no_symbol(receipt.total_tax)" class="pos-receipt-right-align"/>
+                </div>
+                <div class="receipt-line" t-if="receipt.cashier">
+                    <span>
                         Currency
-                        <span t-esc='receipt.currency.name' class="pos-receipt-right-align"/>
-                    </div>
-                </t>
+                    </span>
+                    <span t-esc="receipt.currency.name" class="pos-receipt-right-align"/>
+                </div>
             </t>
 
             <div class='before-footer'/>

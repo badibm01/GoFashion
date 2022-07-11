@@ -3,57 +3,70 @@
 
     <t t-name="OrderCartAction" owl="1">
         <div class="subpads">
-            <div t-if="itemsInCart" class="pos-cart">
-                <NumpadWidget activeMode="state.numpadMode"/>
-                <button class="button pay send-kitchen"
-                        t-att-class="addedClasses"
-                        t-if="!env.pos.session.restaurant_order and payButtonClasses['restaurant'] and countItemsNeedPrint != 0"
-                        t-att-style="!env.pos.config.allow_payment and 'height: 160px; font-size: 20px'"
-                        t-on-click="clickSendToKitchen">
-                    <span class="sub-value">
-                        Send to Kitchen
-                        <span class="with-badge" t-att-badge="countItemsNeedPrint">
-                            <i class="fa fa-print" aria-hidden="true"></i>
+            <div t-if="itemsInCart" class="pos-cart order">
+                <div class="cart-payment-box">
+                    <button class="button set-customer" t-att-class="{
+                        'decentered': isLongName,
+                        'highlight': isCustomerSet,
+                    }"
+                            t-on-click="trigger('click-customer')">
+                        <t t-if="!env.isMobile"><i class="fa fa-user" role="img" aria-label="Customer" title="Customer" /></t>
+                        <span>
+                            <t t-if="client">
+                                <t t-esc="client.name"/>
+                            </t>
+                            <t t-else="">
+                                Customer
+                            </t>
                         </span>
-                    </span>
-                </button>
-                <button class="button pay"
+                    </button>
+                    <button class="button send-kitchen"
+                            t-att-class="addedClasses"
+                            t-if="!env.pos.session.restaurant_order and payButtonClasses['restaurant'] and countItemsNeedPrint != 0"
+                            t-on-click="clickSendToKitchen">
+                        <i role="img" aria-label="Print Kitchen Receipt" title="Print Kitchen Receipt" class="fa fa-print"></i>
+                        <span>Send to Kitchen</span>
+                    </button>
+                    <button class="button pay"
                         t-att-class="payButtonClasses"
                         t-on-click="trigger('click-pay')">
-                    <t t-if="!env.pos.session.restaurant_order">
-                        <t t-if="!env.pos.config.replace_paid_button_to_assign">
-                            <span class="total-value">
-                                <t t-if="payButtonClasses['warning']">
-                                    Return
-                                </t>
-                                <t t-else="">
-                                    PAID
-                                </t>
-                            </span>
-                            <span class="total-value">
-                                <t t-esc="state.total"/>
-                            </span>
-                            <span class="sub-value" t-if="env.pos.config.display_tax_orderline">
-                                 Taxes: <span t-esc="state.tax"/>
-                                / Quantities:
-                                <span t-esc="state.totalQuantities"/>
-                            </span>
+                        <t t-if="!env.pos.session.restaurant_order">
+                            <t t-if="!env.pos.config.replace_paid_button_to_assign">
+                                <i role="img" aria-label="PAID the Order" title="PAID the Order" class="fa fa-chevron-right"></i>
+                                <span class="total-value">
+                                    <t t-if="payButtonClasses['warning']">
+                                        Return
+                                    </t>
+                                    <t t-else="">
+                                        PAID
+                                    </t>
+                                </span>
+                                <span class="sub-value">
+                                    <t t-esc="state.total"/>
+                                </span>
+                                <span class="sub-value" t-if="env.pos.config.display_tax_orderline">
+                                     Taxes: <span t-esc="state.tax"/>
+                                    / Quantities:
+                                    <span t-esc="state.totalQuantities"/>
+                                </span>
+                            </t>
+                            <t t-else="">
+                                <h1>
+                                    ASSIGN ORDER
+                                </h1>
+                            </t>
+                            <div class="shortcut-keyboard" t-if="!env.isMobile" style="width: 100%">
+                                <i class="fa fa-keyboard-o"/>
+                                (Enter)
+                            </div>
                         </t>
                         <t t-else="">
-                            <h1>
-                                ASSIGN ORDER
-                            </h1>
+                            <i class="fa fa-check"/>
+                            PLACE
                         </t>
-                        <span class="shortcut-keyboard" t-if="!env.isMobile">
-                            <i class="fa fa-keyboard-o"/>
-                            (Enter)
-                        </span>
-                    </t>
-                    <t t-else="">
-                        <i class="fa fa-check"/>
-                        PLACE
-                    </t>
-                </button>
+                    </button>
+                    </div>
+                <NumpadWidget activeMode="state.numpadMode"/>
             </div>
         </div>
     </t>

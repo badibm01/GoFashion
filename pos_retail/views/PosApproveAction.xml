@@ -8,10 +8,14 @@
             <field name="arch" type="xml">
                 <tree string="Request Approve Action">
                     <field name="id"/>
+                    <field name="type"/>
                     <field name="action_strId"/>
                     <field name="product_id"/>
+                    <field name="cost_price"/>
+                    <field name="last_price"/>
+                    <field name="current_price"/>
+                    <field name="location_id"/>
                     <field name="name"/>
-                    <field name="type"/>
                     <field name="request_uid"/>
                     <field name="request_time"/>
                     <field name="approve_uid"/>
@@ -49,8 +53,13 @@
                             <field name="id"/>
                             <field name="name"/>
                             <field name="type"/>
-                            <field name="product_id"
-                                   attrs="{'invisible': [('type', '!=', 'out_stock')]}"/>
+                            <field name="product_id"/>
+                            <field name="cost_price"
+                                   attrs="{'invisible': [('type', '=', 'out_stock')]}"/>
+                            <field name="last_price"
+                                   attrs="{'invisible': [('type', '=', 'out_stock')]}"/>
+                            <field name="current_price"
+                                   attrs="{'invisible': [('type', '=', 'out_stock')]}"/>
                             <field name="location_id"
                                    attrs="{'invisible': [('type', '!=', 'out_stock')]}"/>
                             <field name="action_strId" readonly="1"/>
