@@ -186,8 +186,9 @@ odoo.define('pos_retail.ReceiptScreen', function (require) {
                 //     return true
                 // }
                 // --------------------------------------------------
-                await super.printReceipt()
-
+                if (this.currentOrder) {
+                    await super.printReceipt()
+                }
             }
 
             _shouldCloseImmediately() {

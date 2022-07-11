@@ -63,6 +63,10 @@ odoo.define('pos_retail.Chrome', function (require) {
             }
         }
 
+        isKitchenScreen() {
+            return this.env.pos && this.env.pos.config && this.env.pos.config.sync_multi_session && this.env.pos.config.screen_type == "kitchen"
+        }
+
         showCashMoveButton() {
             return this.env.pos && this.env.pos.config && (this.env.pos.config.cash_control || !this.env.pos.config.cash_control);
         }
@@ -189,7 +193,7 @@ odoo.define('pos_retail.Chrome', function (require) {
             link.rel = 'icon';
             document.getElementsByTagName('head')[0].appendChild(link);
             link.href = '/pos_retail/static/description/icon.ico';
-            document.title = 'TL POS-' + odoo.session_info['config']['name'] + '(' + odoo.session_info['username'] + ')'
+            document.title = odoo.session_info['config']['name'] + '(' + odoo.session_info['username'] + ')'
         }
 
         _closeOtherTabs() {

@@ -11,7 +11,7 @@
                     <i class="fa fa-th"/>
                 </t>
                 <t t-else="">
-                    <i class="fa fa-times"/>
+                    <i class="fa fa-home"/>
                 </t>
                 <span class="shortcut-keyboard" t-if="!env.isMobile and !state.showAllCategory">
                     (h)

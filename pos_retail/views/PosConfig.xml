@@ -456,8 +456,6 @@
                             <group>
                                 <group string="Sellers">
                                     <field name="add_sale_person"/>
-                                    <field name="force_seller"
-                                           attrs="{'invisible': [('add_sale_person', '=', False)]}"/>
                                     <field name="default_seller_id"/>
                                     <field name="seller_ids" widget="many2many_tags"
                                            attrs="{'invisible': [('add_sale_person', '=', False)], 'required': [('add_sale_person', '=', True)]}"/>
@@ -521,7 +519,6 @@
                                     <field name="display_tax_receipt"/>
                                     <field name="display_image_orderline"/>
                                     <field name="display_margin"/>
-                                    <field name="display_barcode"/>
                                     <field name="display_minimum_price"/>
                                     <field name="display_amount_discount"/>
                                     <field name="quickly_look_up_product"/>
@@ -739,9 +736,10 @@
                                            required="1"/>
                                 </group>
                                 <group>
+                                    <field name="display_barcode"/>
+                                    <field name="display_product_ref"/>
                                     <field name="display_sale_price_within_tax"/>
                                     <field name="display_cost_price"/>
-                                    <field name="display_product_ref"/>
                                     <field name="hide_product_image"/>
                                     <field name="display_product_detail"/>
                                     <field name="allow_remove_product"/>

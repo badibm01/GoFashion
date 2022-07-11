@@ -11,7 +11,7 @@
             <td>
                 <t t-esc="props.number"/>
             </td>
-            <td>
+            <td style="text-align: left">
                 <span class="product-line-name">
                     <t t-esc="partner.name"/>
                 </span>
@@ -44,7 +44,7 @@
                     <i class="fa fa-link"/>
                 </a>
             </td>
-            <td>
+            <td style="text-align: left">
                 <t t-esc="partner.address"/>
             </td>
             <td>

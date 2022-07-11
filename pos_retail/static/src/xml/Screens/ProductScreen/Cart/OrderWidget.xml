@@ -13,6 +13,20 @@
                           totalWithOutTaxes="state.totalWithOutTaxes"/>
         </xpath>
         <xpath expr="//ul[hasclass('orderlines')]" position="replace">
+             <table class='summary-table' style="display: inline-table; width: 100%">
+                <colgroup>
+                    <col width='60%'/>
+                    <col width='30%'/>
+                </colgroup>
+                <tr class="receipt-line" t-if="!env.isMobile" style="cursor: unset">
+                    <td style="text-align: center">
+                        Receipt No: <t t-esc="env.pos.get_order()['name']"/>
+                    </td>
+                    <td style="text-align: center">
+                        Created at :<t t-esc="env.pos.get_order()['created_time']"/>
+                    </td>
+                </tr>
+            </table>
             <table class='summary-table'>
                 <colgroup>
                     <col width='5%'/>

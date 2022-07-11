@@ -173,6 +173,7 @@
 .pos .order-container .receipt-line td {
     font-size: 13px !important;
     vertical-align: middle;
+    border: 1px dotted;
 }
 
 .pos .warning-message {
@@ -240,12 +241,6 @@
 .alert b {
     font-weight: 900;
     font-size: 18px;
-}
-
-.pos .modal-dialog .popup {
-    line-height: 30px;
-    background-color: #fff;
-    max-width: 800px;
 }
 
 .pos .modal-dialog .popup-textinput input {
@@ -338,8 +333,7 @@
     font-size: 18px;
 }
 .pos .loader-feedback .progressbar {
-    background: #ffffff;
-    height: 5px;
+    background: black;
     border-radius: 10px;
 }
 
@@ -471,19 +465,21 @@
 }
 
 .pos .control-button {
-    height: 55px;
+    margin: 5px;
+    margin-bottom: 10px;
     padding: 3px;
     width: 30%;
     min-width: unset;
+    /* max-width: 100px; */
     background: #fff;
     border-radius: 5px;
     display: inline-block;
     line-height: 15px;
     color: black;
     font-size: 13px;
-    margin: 3px;
-    margin-bottom: 0px;
-    border: 1px solid #cbcbcb;
+    /* margin: 6px; */
+    /* margin-bottom: 0px; */
+    /* border: 1px solid #cbcbcb; */
     box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 1px 5px 0 rgba(0, 0, 0, 0.12);
 }
 
@@ -633,6 +629,10 @@
     font-size: 13px;
 }
 
+.pos .clientlist-screen td {
+    border-bottom: unset !important;
+    border: 1px dotted;
+}
 .pos .clientlist-screen .client-list thead > tr, .pos .clientlist-screen .client-list tr:nth-child(even) {
     background: #fff;
     border-top: 1px;
@@ -789,6 +789,7 @@
 
 .pos .rightpane-header {
     width: 100%;
+    color: black;
     text-align: center;
     display: flex;
     align-items: stretch;
@@ -797,12 +798,14 @@
     flex-wrap: wrap;
     overflow-x: unset;
     overflow-y: unset;
+    background: unset;
 }
 
 .pos .category-list {
     background: inherit;
     padding: 0px;
     max-height: 40vh;
+    border: 1px solid #eee;
 }
 
 @media screen and (min-width: 768px) {
@@ -899,16 +902,11 @@
 }
 
 .pos .category-simple-button {
-    border-radius: 5px;
-    height: 40px;
-    text-align: center;
+   ext-align: center;
     margin: 10px;
-    margin-top: 10px;
-    min-width: 115px;
     color: black;
     background: #fff;
-    border: 1px solid #cbcbcb;
-    box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 1px 5px 0 rgba(0, 0, 0, 0.12);
+    border: unset;
     font-weight: 900;
 }
 .pos .category-simple-button:hover {
@@ -1017,6 +1015,7 @@
 .pos .set-customer .fa-user {
     left: 13px;
     float: left;
+    text-align: center;
     top: 13px;
     margin-right: 8px;
     font-size: 18px;
@@ -1073,9 +1072,9 @@
 
 .pos .numpad {
     border: 0px;
-    width: 49%;
+    width: 50%;
     margin: unset;
-    min-width: 150px;
+    float: left;
 }
 
 .pos .numpad button:nth-child(4) {
@@ -1302,7 +1301,7 @@
 }
 
 .pos .checkout {
-    background: #d3d3d3;
+    border: 1px solid #eee;
 }
 
 .pos .mode-button.selected-mode {
@@ -1332,12 +1331,9 @@
 .pos .footer-cart-button {
     height: 50px;
     font-size: 18px;
-    border-radius: 5px;
     margin: auto;
-    width: auto;
-    margin-top: 10px;
-    border: unset !important;
     display: inline-grid;
+    width: 20%;
 }
 
 .pos .footer-cart-button:hover {
@@ -1369,34 +1365,76 @@
     background: #ff9800 !important;
 }
 
-.pos .pay {
-    height: 160px;
+.pos .total-value {
+    color: #ff5722;
+    font-weight: 900 !important;
+    font-size: 30px !important;
+    text-shadow: 1px 1px 1px #ffffff;
+}
+
+.pos .cart-payment-box .pay {
+    width: 100%;
+    padding-left: 3px !important;
+    padding-right: 3px !important;
+    height: 150px;
+}
+
+.pos .cart-payment-box {
     width: 50%;
-    margin-left: 1%;
+    display: inline-block;
+}
+.pos .cart-payment-box .set-customer {
+    height: 50px;
+    width: 50%;
+    line-height: 15px;
+    text-align: left;
+    margin: 0px;
+    font-weight: 900;
+    padding-left: 3px !important;
+    padding-right: 3px !important;
 }
 
-.pos .restaurant {
-    height: 100px !important;
+.pos .cart-payment-box .send-kitchen {
+    height: 50px;
+    width: 50%;
+    line-height: 15px;
+    float: right;
+    text-align: left;
+    margin: 0px;
+    font-weight: 900;
+    padding-left: 3px !important;
+    padding-right: 3px !important;
 }
 
-.pos .send-kitchen {
-    height: 55px;
-    margin-bottom: 5px;
+.pos .cart-payment-box .fa-print {
+    left: 13px;
+    float: left;
+    top: 13px;
+    text-align: center;
+    margin-right: 8px;
+    font-size: 18px;
+    background: #eee;
+    line-height: 30px;
+    width: 30px;
+    border-radius: 100%;
+}
+
+.pos .cart-payment-box .fa-chevron-right {
+    left: 13px;
+    float: left;
+    top: 13px;
+    text-align: center;
+    margin-right: -30px;
+    font-size: 18px;
+    background: #eee;
+    line-height: 30px;
+    width: 30px;
+    border-radius: 100%;
 }
 
 .pos .header-colum {
     background: #eee;
     color: black;
-}
-
-.pos .total-value {
-    width: 100%;
-    display: block;
-    font-weight: 900 !important;
-    font-size: 30px !important;
-    padding-right: 5px !important;
-    color: #ff5722 !important;
-    text-shadow: 1px 1px 1px #201c1c;
 }
 
 .pos .sub-value {
@@ -1969,17 +2007,13 @@
 /*order cart*/
 .pos .badge {
     color: black;
-    padding: 5px;
     font-size: 30px;
     float: left;
-    border-top: 1px solid #999999;
     font-weight: 900;
 }
 
 .pos .value {
-    color: black;
-    font-size: 25px;
-    font-weight: 900;
+    color: #FF5722;
 }
 
 /*customer (client) screen*/
@@ -2402,15 +2436,16 @@
 
 .pos .order .summary {
     margin-top: 0px;
-    min-height: 100px;
     border-top: 3px solid black;
     margin-bottom: 0px;
 }
 
 .pos .order .summary .line {
     margin-right: 0px;
+    margin-left: 0px;
     border-color: black;
     background: #e2e2e2;
+    width: 100%;
 }
 
 .splitbill-screen .order .orderline.selected .info-list em {
@@ -2597,8 +2632,28 @@
     text-align: left;
 }
 
-.pos .receipt-line td {
+.pos .product-line td{
     border: 1px solid #cbcbcb;
+    color: black;
+    padding: 5px;
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 20px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.pos .product-line td .product-info-button {
+    position: unset !important;
+    cursor: pointer;
+}
+
+.pos .product-line:hover {
+    background: #6EC89B;
+}
+
+.pos .receipt-line td {
+    border-bottom: 1px solid;
     color: black;
     padding: 5px;
     font-weight: 400;
@@ -2852,9 +2907,9 @@
 .pos .numpad button {
     color: black;
     border-radius: 0px;
-    height: 40px;
+    height: 50px;
     font-weight: 900;
-    font-size: 13px;
+    font-size: 20px;
     border: 1px solid #d5d5d5;
     width: 25%;
     margin: 0px;
@@ -2868,7 +2923,7 @@
 }
 
 .pos .numpad .number-char {
-    font-size: 20px !important;
+    font-size: 30px !important;
 }
 
 .pos .qrcode-link {
@@ -3000,7 +3055,6 @@
     font-weight: 400;
 
 }
-
 .pos .popup .footer {
     background: #fff;
 }
@@ -3114,16 +3168,14 @@
 
 .pos .pos-search-bar .search input {
     height: 40px;
-    font-width: 900;
     margin: 0px;
     font-size: 13px;
     color: black;
-    background: #fff;
+    background: #eee;
     text-align: center;
     flex: 1;
     border-radius: 5px;
-    border: 1px solid #cbcbcb;
-    box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 1px 5px 0 rgba(0, 0, 0, 0.12);
+    border: 1px solid #bca8a8;
 }
 
 .pos .input {
@@ -3134,6 +3186,7 @@
     background: #6EC89B !important;
     margin: 5px;
     margin-left: 10px;
+    width: 45px;
 }
 
 .pos .filter {
@@ -3378,5 +3431,8 @@
     -moz-box-shadow: 0 10px 6px -6px #FF5722;
     background-color: #6EC89B;
     font-weight: 400;
+}
 
+.pos .report-small {
+    display: inline-table;
 }

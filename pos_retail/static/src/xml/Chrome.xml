@@ -8,6 +8,9 @@
         <!--        <xpath expr="//div[hasclass('pos-content')]" position="attributes">-->
         <!--            <attribute name="t-att-class">{ full_screen: isHidden}</attribute>-->
         <!--        </xpath>-->
+<!--        <xpath expr="//div[hasclass='pos-branding']" position="attributes">-->
+<!--            <attribute nam="t-if">!env.isMobile and !isKitchenScreen()</attribute>-->
+<!--        </xpath>-->
         <div class="pos-receipt-print"></div>
         <xpath expr="//div[hasclass('pos-receipt-print')]" position="before">
             <div class="pos-receipt-container"/>
@@ -77,7 +80,7 @@
             <ReloadPOS/>
         </xpath>
         <xpath expr="//SaleDetailsButton" position="replace">
-            <SaleDetailsButton t-if="env.pos.proxy.printer and !env.session.restaurant_order"/>
+            <SaleDetailsButton t-if="!env.session.restaurant_order"/>
         </xpath>
         <xpath expr="//ClientScreenButton" position="replace">
             <ClientScreenButton t-if="clientScreenButtonIsShown and !env.session.restaurant_order"/>

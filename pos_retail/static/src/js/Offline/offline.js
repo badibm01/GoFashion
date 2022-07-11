@@ -7,6 +7,7 @@ odoo.define('pos_retail.offline', function (require) {
     const retailModel = require('pos_retail.model')
     const bigData = require('pos_retail.big_data')
     const bus = require('pos_retail.core_bus')
+    const Session = require('web.Session')
     const Backbone = window.Backbone
     const exports = {}
 
@@ -19,6 +20,7 @@ odoo.define('pos_retail.offline', function (require) {
             this.bus.last = this.pos.db.load('bus_last', 0);
             this.bus.on("notification", this, this.on_notification);
             this.bus.start_polling();
+            this.automatic_ping_server()
         },
 
         on_notification(notifications) {
@@ -33,7 +35,26 @@ odoo.define('pos_retail.offline', function (require) {
                     console.log('Odoo Server restored !!!')
                 }
             }
-        }
+        },
+
+        async automatic_ping_server() {
+            const self = this
+            if (this.pos.networkCrashed) {
+                const serverOrigin = this.pos.session.origin;
+                const connection = new Session(void 0, serverOrigin, {
+                    use_cors: true
+                });
+                const pingServer = await connection.rpc('/pos/passing/login', {}).then(function (result) {
+                    return result
+                }, function (error) {
+                    return false;
+                })
+                if (pingServer) {
+                    this.pos._onConnectionRestored()
+                }
+            }
+            setTimeout(_.bind(self.automatic_ping_server, self), 6500);
+        },
     });
 
     let _super_PosModel = models.PosModel.prototype;
@@ -44,7 +65,8 @@ odoo.define('pos_retail.offline', function (require) {
             this.networkCrashed = false
             return _super_PosModel.load_server_data.apply(this, arguments).then(function () {
                 console.log('load_server_data for offline started')
-                new exports.networkCrashed(self).start();
+                self.netWorkController = new exports.networkCrashed(self)
+                self.netWorkController.start()
             })
         },
 

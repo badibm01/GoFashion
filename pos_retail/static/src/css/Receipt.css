@@ -19,10 +19,9 @@
 .pos .pos-receipt-container > div {
     margin-top: 0px !important;
     padding: 5px !important;
-    padding-top: 0px !important;
+    padding-top: 5px !important;
     margin: 5px;
     line-height: 20px;
-
 }
 
 .printer-label .pos-receipt-title {
@@ -68,12 +67,15 @@
         display: none !important;
     }
 
+    .pos .top-content {
+        display: none;
+    }
+
     .pos .pos-receipt {
         margin: 0 !important;
         margin-left: auto !important;
         margin-right: auto !important;
         border: none !important;
-        width: 266px !important;
         font-size: unset;
     }
 
@@ -109,7 +111,7 @@
 .pos-receipt .receipt-line td {
     overflow: hidden;
     text-overflow: ellipsis;
-    font-size: 100% !important;
+    font-size: 85% !important;
     padding: 3px !important;
     color: black !important;
 }
@@ -154,8 +156,8 @@
 .pos-receipt .product-line-name {
     color: black;
     padding-left: 0px;
-    line-height: 25px;
-    font-size: 90%;
+    font-size: 85% !important;
+    font-weight: 900 !important;
 }
 
 .pos-receipt .pos-receipt-right-align {
@@ -221,11 +223,10 @@
 }
 
 .pos-receipt .pos-receipt-amount {
-    padding-top: 5px !important;
-    padding-bottom: 5px;
+    padding-top: 1em !important;
+    padding-bottom: 1em !important;
     font-weight: 900 !important;
-    padding-left: 2em;
-    border-bottom: 1px dotted;
+    padding-left: 0em;
 }
 
 .pos-receipt .pos-receipt-title {

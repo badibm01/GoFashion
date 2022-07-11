@@ -55,7 +55,7 @@
                                   'required':[('applied_on', '=', '4_pos_category')]}"
                            options="{'no_create':1}"/>
                 </xpath>
-                <xpath expr="//field[@name='date_end']" position="after">
+                <xpath expr="//field[@name='min_quantity']" position="before">
                     <field name="min_price"/>
                     <field name="max_price"/>
                 </xpath>

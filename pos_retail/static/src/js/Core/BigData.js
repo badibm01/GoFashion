@@ -120,9 +120,9 @@ odoo.define('pos_retail.big_data', function (require) {
                 this.models = this.models.filter(m => m.label != 'load_products' && m.label != 'load_partners')
             }
             // TODO: start get datas from cache of browse
-            this.indexed_db = new indexed_db(odoo.session_info)
-            this.indexed_db.get_datas('product.product', 10)
-            this.indexed_db.get_datas('res.partner', 10)
+            this.indexed_db = new indexed_db(this, odoo.session_info)
+            // this.indexed_db.get_datas('product.product', 10)
+            // this.indexed_db.get_datas('res.partner', 10)
         },
 
         async getDatasByModel(model, domain, fields, context) {
@@ -251,8 +251,11 @@ odoo.define('pos_retail.big_data', function (require) {
             this.db.save_sale_order_lines(order_lines);
         },
 
-        async getPosOrders() {
+        async getPosOrders(domain=null) {
             const model = this.get_model('pos.order');
+            if (!domain) {
+                domain = model['domain']
+            }
             this.savePosOrders(await this.getDatasByModel(model['model'], model['domain'], model['fields'], model['context']))
             await this.getPosOrderLines()
             await this.getPosPayments()
@@ -475,7 +478,7 @@ odoo.define('pos_retail.big_data', function (require) {
             })
         },
 
-        reloadPosScreen() {
+        async reloadPosScreen() {
             const self = this;
             return new Promise(function (resolve, reject) {
                 self.rpc({
@@ -740,14 +743,14 @@ odoo.define('pos_retail.big_data', function (require) {
                 this.total_products += results.length;
                 this.product_ids = this.product_ids.concat(_.pluck(results, 'id'))
                 process_time = this.get_process_time(this.total_products, this.model_ids[model]['count'])
-                this.setLoadingMessage(_t('Loading') + ' ' + model + ' ' + process_time * 100 + ' %', process_time)
+                this.setLoadingMessage(_t('Loaded') + ' ' + model + ' ' + parseInt(process_time * 100) + ' %', process_time)
                 this.product_model.loaded(this, results)
             }
             if (model == 'res.partner') {
                 this.total_clients += results.length;
                 this.partner_ids = this.partner_ids.concat(_.pluck(results, 'id'))
                 process_time = this.get_process_time(this.total_clients, this.model_ids[model]['count'])
-                this.setLoadingMessage(_t('Loading') + ' ' + model + ' ' + process_time * 100 + ' %', process_time)
+                this.setLoadingMessage(_t('Loaded') + ' ' + model + ' ' + parseInt(process_time * 100) + ' %', process_time)
                 this.partner_model.loaded(this, results)
             }
             this.load_datas_cache = true;
@@ -1249,8 +1252,8 @@ odoo.define('pos_retail.big_data', function (require) {
     models.load_models([{
         label: 'Reload Session', condition: function (self) {
             return self.pos_session.required_reinstall_cache;
-        }, loaded: function (self) {
-            return self.reloadPosScreen()
+        }, loaded: async function (self) {
+            return await self.reloadPosScreen()
         },
     }, {
         label: 'Ping Cache Server', condition: function (self) {
@@ -1312,22 +1315,22 @@ odoo.define('pos_retail.big_data', function (require) {
             }
         }, loaded: async function (self) {
             // TODO: before 10.06.2022
-            // await self.indexed_db.get_datas('product.product', 10)
-            // await self.indexed_db.get_datas('res.partner', 10)
+            await self.indexed_db.get_datas('product.product', 10)
+            await self.indexed_db.get_datas('res.partner', 10)
             // -----------------------------------------------
-            const products = self.indexed_db.data_by_model['product.product']
-            if (products) {
-                await self.save_results('product.product', products)
-            }
-            const partners = self.indexed_db.data_by_model['res.partner']
-            if (partners) {
-                await self.save_results('res.partner', partners)
-            }
-            if (products && partners) {
-                console.log('>>>>>>> Total products: ' + products.length + ', and Total customers: ' + partners.length)
-            } else {
-                console.warn('>>>>>> products and customers not save in cache !!!')
-            }
+            // const products = self.indexed_db.data_by_model['product.product']
+            // if (products) {
+            //     await self.save_results('product.product', products)
+            // }
+            // const partners = self.indexed_db.data_by_model['res.partner']
+            // if (partners) {
+            //     await self.save_results('res.partner', partners)
+            // }
+            // if (products && partners) {
+            //     console.log('>>>>>>> Total products: ' + products.length + ', and Total customers: ' + partners.length)
+            // } else {
+            //     console.warn('>>>>>> products and customers not save in cache !!!')
+            // }
         }
     }], {
         after: 'pos.category'

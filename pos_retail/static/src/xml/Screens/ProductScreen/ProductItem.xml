@@ -6,21 +6,20 @@
         <t t-set="out_stock"
            t-value="product.qty_available == 0 or !product.qty_available or product.qty_available &lt; 0"/>
         <t t-if="env.pos.config.product_view == 'list'">
-            <tr class="receipt-line"
+            <tr class="product-line"
                 t-att-class="{
                         'oe_hidden': disableSale,
                         'highlight': product.modifiers
                      }"
                 tabindex="0"
                 t-on-click.stop="trigger('click-product', product)"
-                t-on-mouseover.stop="_autoSyncBackend"
-                t-on-keypress="spaceClickProduct"
                 t-att-data-product-id="product.id"
                 t-attf-aria-labelledby="article_product_{{product.id}}">
                 <td style="text-align: center">
                     <t t-esc="props.number"/>
                     <i role="img" aria-label="Info" title="Info" class="product-info-button fa fa-info-circle"
                        t-on-click.stop="showProductInfo"
+                       t-on-mouseover.stop="_autoSyncBackend"
                     />
                 </td>
                 <td style="text-align: left">
@@ -34,10 +33,15 @@
                     </span>
                     <ProductCountInCart product="props.product"/>
                 </td>
+                <td style="text-align: center">
+                    <t t-if="product.uom_id">
+                        <t t-esc="product.uom_id[1]"/>
+                    </t>
+                </td>
                 <td style="text-align: center" t-if="env.pos.config.display_onhand">
                     <ProductOnHand product="product" t-if="product['type'] == 'product'"/>
                 </td>
-                <td style="text-align: center">
+                <td style="text-align: center" t-if="env.pos.config.display_product_ref">
                      <t t-if="product['default_code']">
                         <t t-esc="product['default_code']"/>
                     </t>
@@ -45,10 +49,10 @@
                         N/A
                     </t>
                 </td>
-                <td style="text-align: center">
+                <td style="text-align: center" t-if="env.pos.config.display_barcode">
                      <t t-esc="product['barcode'] or 'N/A'"/>
                 </td>
-                <td style="text-align: center">
+                <td style="text-align: center" t-if="env.pos.config.display_barcode">
                     <t t-if="product.barcode">
                         <i t-on-click.stop="printBarcode"
                            class="oe_link_icon fa fa-print oe_icon line-lot-icon"
@@ -66,7 +70,7 @@
                         />
                     </t>
                 </td>
-                <td style="text-align: center">
+                <td style="text-align: right">
                     <span class="price price-tag">
                         <t t-esc="price"/>
                     </span>
@@ -79,9 +83,8 @@
                        title="Modifiers Product"
                     />
                 </td>
-                <td style="text-align: center">
+                <td style="text-align: center" t-if="env.pos.config.allow_remove_product and !env.isMobile">
                     <i t-on-click.stop="archiveProduct"
-                       t-if="env.pos.config.allow_remove_product and !env.isMobile"
                        class="oe_link_icon fa fa-trash oe_icon line-lot-icon"
                        aria-label="Archive Product"
                        role="img"
@@ -96,9 +99,7 @@
                      t-att-class="{
                             'oe_hidden': disableSale,
                          }"
-                     t-on-keypress="spaceClickProduct"
                      t-on-click="trigger('click-product', props.product)"
-                     t-on-mouseover.stop="_autoSyncBackend"
                      t-att-data-product-id="props.product.id"
                      t-attf-aria-labelledby="article_product_{{props.product.id}}">
                 <div class="product-img" t-if="!env.pos.config.hide_product_image">
@@ -112,6 +113,7 @@
                    title="Info"
                    class="product-info-button fa fa-info-circle"
                    t-on-click.stop="showProductInfo"
+                   t-on-mouseover.stop="_autoSyncBackend"
                 />
                 <i role="img"
                    aria-label="Info"

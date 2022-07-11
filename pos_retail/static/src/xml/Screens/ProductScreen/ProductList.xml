@@ -8,32 +8,36 @@
                     <table class='summary-table'>
                         <colgroup>
                             <col width='3%'/>
-                            <col width='30%'/>
+                            <col width='25%'/>
                             <col width='5%'/>
-                            <col width='12%'/>
-                            <col width='10%'/>
-                            <col width='10%'/>
+                            <col width='5%' t-if="env.pos.config.display_onhand"/>
+                            <col width='12%' t-if="env.pos.config.display_product_ref"/>
+                            <col width='10%' t-if="env.pos.config.display_barcode"/>
+                            <col width='10%' t-if="env.pos.config.display_barcode"/>
                             <col width='20%'/>
                             <col width='5%' t-if="env.pos.config.allow_edit_product and !env.isMobile"/>
                             <col width='5%' t-if="env.pos.config.allow_remove_product and !env.isMobile"/>
                         </colgroup>
-                        <tr class="receipt-line">
+                        <tr class="product-line">
                             <td style="text-align: center">
                                 No.
                             </td>
                             <td style="text-align: left; color: blue" t-on-click.stop="trigger('trigger-sort-product-fields', {field: 'display_name', int: false})">
                                 Name
                             </td>
+                            <td style="text-align: center">
+                                Unit
+                            </td>
                             <td style="text-align: center; color: blue" t-on-click.stop="trigger('trigger-sort-product-fields', {field: 'id', int: true})" t-if="env.pos.config.display_onhand">
                                 Stock On Hand
                             </td>
-                            <td style="text-align: center; color: blue" t-on-click.stop="trigger('trigger-sort-product-fields', {field: 'default_code', int: false})">
+                            <td style="text-align: center; color: blue" t-on-click.stop="trigger('trigger-sort-product-fields', {field: 'default_code', int: false})"  t-if="env.pos.config.display_product_ref">
                                 Internal Reference
                             </td>
-                            <td style="text-align: center; color: blue" t-on-click.stop="trigger('trigger-sort-product-fields', {field: 'barcode', int: false})">
+                            <td style="text-align: center; color: blue" t-on-click.stop="trigger('trigger-sort-product-fields', {field: 'barcode', int: false})" t-if="env.pos.config.display_barcode">
                                 Barcode
                             </td>
-                            <td style="text-align: center">
+                            <td style="text-align: center" t-if="env.pos.config.display_barcode">
                                 Print Barcode
                             </td>
                             <td style="text-align: center; color: blue" t-on-click.stop="trigger('trigger-sort-product-fields', {field: 'lst_price', int: true})">

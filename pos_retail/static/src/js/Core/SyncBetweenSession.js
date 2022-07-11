@@ -13,82 +13,85 @@ odoo.define('pos_retail.synchronization', function (require) {
     const {posbus} = require('point_of_sale.utils');
     const BigData = require('pos_retail.big_data');
 
-    models.load_models([
-        { // TODO: for offline mode
-            model: 'pos.iot',
-            condition: function (self) {
-                if (self.config.sync_multi_session && self.config.sync_multi_session_offline && self.config.sync_multi_session_offline_iot_ids.length) {
-                    return true
-                } else {
-                    return false;
+    models.load_models([{ // TODO: for offline mode
+        model: 'pos.iot',
+        condition: function (self) {
+            if (self.config.sync_multi_session && self.config.sync_multi_session_offline && self.config.sync_multi_session_offline_iot_ids.length) {
+                return true
+            } else {
+                return false;
+            }
+        },
+        fields: ['name', 'prefix', 'proxy', 'port', 'product_ids', 'screen_kitchen', 'login_kitchen', 'password_kitchen', 'odoo_public_proxy',],
+        domain: function (self) {
+            return [['id', 'in', self.config.sync_multi_session_offline_iot_ids]]
+        },
+        loaded: function (self, iot_boxes) {
+            self.iot_boxes = iot_boxes;
+            self.iot_box_by_id = {};
+            self.iot_connections = [];
+            self.iot_https_need_verify = [];
+            for (let i = 0; i < iot_boxes.length; i++) {
+                let iot_box = iot_boxes[i];
+                let iot_url = iot_box.prefix;
+                iot_url += '://';
+                iot_url += iot_box.proxy;
+                if (iot_box.port) {
+                    iot_url += ':' + iot_box.port;
                 }
-            },
-            fields: [
-                'name',
-                'prefix',
-                'proxy',
-                'port',
-                'product_ids',
-                'screen_kitchen',
-                'login_kitchen',
-                'password_kitchen',
-                'odoo_public_proxy',
-            ],
-            domain: function (self) {
-                return [['id', 'in', self.config.sync_multi_session_offline_iot_ids]]
-            },
-            loaded: function (self, iot_boxes) {
-                self.iot_boxes = iot_boxes;
-                self.iot_box_by_id = {};
-                self.iot_connections = [];
-                self.iot_https_need_verify = [];
-                for (let i = 0; i < iot_boxes.length; i++) {
-                    let iot_box = iot_boxes[i];
-                    let iot_url = iot_box.prefix;
-                    iot_url += '://';
-                    iot_url += iot_box.proxy;
-                    if (iot_box.port) {
-                        iot_url += ':' + iot_box.port;
-                    }
-                    self.iot_box_by_id[iot_boxes[i].id] = iot_boxes[i];
-                    let iot_connection = new Session(void 0, iot_url, {
-                        use_cors: true
-                    });
-                    iot_connection.rpc('/pos/passing/login', {}, {shadow: true, timeout: 2500})
-                        .then(function (status) {
-                            console.log('Result Ping POSBOX: ' + status)
-                        }, function (error) {
-                            console.error('Has Error when connecting to posbox')
-                            alert('Has Error when connecting to posbox. Please check your internet or posbox address')
-                        })
-                    if (iot_box.screen_kitchen) {
-                        iot_connection['screen_kitchen'] = iot_box['screen_kitchen'];
-                        iot_connection['login_kitchen'] = iot_box['login_kitchen'];
-                        iot_connection['password_kitchen'] = iot_box['password_kitchen'];
-                        iot_connection['odoo_public_proxy'] = iot_box['odoo_public_proxy']
-                    }
-                    self.iot_connections.push(iot_connection)
-                    self.iot_https_need_verify.push(iot_url)
+                self.iot_box_by_id[iot_boxes[i].id] = iot_boxes[i];
+                let iot_connection = new Session(void 0, iot_url, {
+                    use_cors: true
+                });
+                iot_connection.rpc('/pos/passing/login', {}, {shadow: true, timeout: 2500})
+                    .then(function (status) {
+                        console.log('Result Ping POSBOX: ' + status)
+                    }, function (error) {
+                        console.error('Has Error when connecting to posbox')
+                        alert('Has Error when connecting to posbox. Please check your internet or posbox address')
+                    })
+                if (iot_box.screen_kitchen) {
+                    iot_connection['screen_kitchen'] = iot_box['screen_kitchen'];
+                    iot_connection['login_kitchen'] = iot_box['login_kitchen'];
+                    iot_connection['password_kitchen'] = iot_box['password_kitchen'];
+                    iot_connection['odoo_public_proxy'] = iot_box['odoo_public_proxy']
+                }
+                self.iot_connections.push(iot_connection)
+                self.iot_https_need_verify.push(iot_url)
+            }
+        }
+    }, { // TODO: for online mode. sync direct to odoo server
+        label: 'init sync connection', condition: function (self) {
+            if (self.config.sync_multi_session && !self.config.sync_multi_session_offline) {
+                return true
+            } else {
+                return false;
+            }
+        }, loaded: function (self) {
+            let iot_url = self.session.origin;
+            self.iot_connections = [new Session(void 0, iot_url, {
+                use_cors: true
+            })];
+        },
+    }, { // TODO: remove all orders have paid or cancelled
+        model: 'pos.order', domain: function (self) {
+            const orders = self.db.get_unpaid_orders()
+            const ordersName = _.pluck(orders, 'name')
+            return [['pos_reference', 'in', ordersName], ['state', 'not in', ['draft', 'quotation']]]
+        }, // TODO: we get all orders in cache and compare with backend, if any order in cache have saved in backend by another session, we will drop in this cache
+        fields: ['name', 'pos_reference', 'state'], loaded: function (self, orders) {
+            const ordersInCache = self.db.get_unpaid_orders()
+            for (let i = 0; i < ordersInCache.length; i++) {
+                let orderInCache = ordersInCache[i]
+                let orderDone = orders.find(o => o.pos_reference == orderInCache.name)
+                if (orderDone) {
+                    self.db.remove_unpaid_order(orderInCache)
+                    self.db.remove_order(orderInCache['uid']);
+                    console.warn("Order " + orderInCache['uid'] + " have done in backend, remove it out of cache ")
                 }
             }
         },
-        { // TODO: for online mode. sync direct to odoo server
-            label: 'init sync connection',
-            condition: function (self) {
-                if (self.config.sync_multi_session && !self.config.sync_multi_session_offline) {
-                    return true
-                } else {
-                    return false;
-                }
-            },
-            loaded: function (self) {
-                let iot_url = self.session.origin;
-                self.iot_connections = [new Session(void 0, iot_url, {
-                    use_cors: true
-                })];
-            },
-        },
-    ]);
+    },]);
 
     exports.pos_bus = Backbone.Model.extend({
         initialize: function (pos) {
@@ -137,8 +140,7 @@ odoo.define('pos_retail.synchronization', function (require) {
                 total_error = 1
             }
             this.pos.set('syncStatus', {
-                status: 'disconnected',
-                pending: 'Sync Sessions'
+                status: 'disconnected', pending: 'Sync Sessions'
             });
             this.pos.sync_status = false;
             setTimeout(function () {
@@ -175,8 +177,7 @@ odoo.define('pos_retail.synchronization', function (require) {
                 if (!self.pos.config.sync_multi_session) {
                     pending += 1
                     self.pos.set('syncStatus', {
-                        status: 'disconnected',
-                        pending: '[Syncing Pending] ' + pending + ' seconds'
+                        status: 'disconnected', pending: '[Syncing Pending] ' + pending + ' seconds'
                     });
                     return setTimeout(function () {
                         waitSync()
@@ -270,9 +271,7 @@ odoo.define('pos_retail.synchronization', function (require) {
                 if (orders[i].get_allow_sync()) {
                     let order = orders[i];
                     this.send_notification({
-                        data: order.export_as_JSON(),
-                        action: 'new_order',
-                        order_uid: order.uid,
+                        data: order.export_as_JSON(), action: 'new_order', order_uid: order.uid,
                     });
                 }
             }
@@ -288,9 +287,7 @@ odoo.define('pos_retail.synchronization', function (require) {
 
         async _build_send_to() {
             let sync_to_points = await rpc.query({
-                model: 'pos.config',
-                method: 'get_points_sync',
-                args: [[], this.pos.config.id]
+                model: 'pos.config', method: 'get_points_sync', args: [[], this.pos.config.id]
             })
             if (sync_to_points) {
                 this.sync_to_points = sync_to_points
@@ -308,8 +305,7 @@ odoo.define('pos_retail.synchronization', function (require) {
             }
             if (!value['order_uid']) {
                 return this.pos.chrome.showPopup('ErrorPopup', {
-                    title: _t('Warning'),
-                    body: _t('Order UID for sync between Session is required !')
+                    title: _t('Warning'), body: _t('Order UID for sync between Session is required !')
                 })
             }
             if (['paid_order', 'unlink_order'].includes(action)) {
@@ -321,13 +317,11 @@ odoo.define('pos_retail.synchronization', function (require) {
                 }
             }
             this.pos.set('syncStatus', {
-                status: 'connecting',
-                pending: 'Sync: ' + action
+                status: 'connecting', pending: 'Sync: ' + action
             })
             if (this.pos.config.sync_to_pos_config_ids.length == 0) {
                 return this.pos.chrome.showPopup('ErrorPopup', {
-                    title: _t('Warning'),
-                    body: _t('Your POS Setting not add Sync with POS Locations')
+                    title: _t('Warning'), body: _t('Your POS Setting not add Sync with POS Locations')
                 })
             }
             if (this.pos.user) {
@@ -395,26 +389,22 @@ odoo.define('pos_retail.synchronization', function (require) {
             data['sequence'] = this.sequence;
             datas_false.push(data);
             this.save('datas_false', datas_false);
-        },
-        get_datas_false: function () {
+        }, get_datas_false: function () {
             let datas_false = this.load('datas_false');
             if (datas_false && datas_false.length) {
                 return datas_false
             } else {
                 return []
             }
-        },
-        remove_data_false: function (sequence) {
+        }, remove_data_false: function (sequence) {
             let datas_false = this.load('datas_false', []);
             let datas_false_new = _.filter(datas_false, function (data) {
                 return data['sequence'] !== sequence;
             });
             this.save('datas_false', datas_false_new);
-        },
-        get_orders_done() {
+        }, get_orders_done() {
             return this.load('ordersUidDone', [])
-        },
-        save_done_order(ordersUidDone) {
+        }, save_done_order(ordersUidDone) {
             let ordersUidDoneBefore = this.load('ordersUidDone', []);
             if (!ordersUidDoneBefore.includes(ordersUidDone)) {
                 ordersUidDoneBefore.push(ordersUidDone)
@@ -435,12 +425,9 @@ odoo.define('pos_retail.synchronization', function (require) {
                 let selectedOrder = self.get_order();
                 if (self.pos_bus && self.config && selectedOrder && !selectedOrder.syncing && self.config.screen_type != 'kitchen') {
                     self.pos_bus.send_notification({
-                        action: 'selected_order',
-                        data: {
-                            uid: selectedOrder['uid'],
-                            order: selectedOrder.export_as_JSON(),
-                        },
-                        order_uid: selectedOrder.uid
+                        action: 'selected_order', data: {
+                            uid: selectedOrder['uid'], order: selectedOrder.export_as_JSON(),
+                        }, order_uid: selectedOrder.uid
                     });
 
                 }
@@ -857,14 +844,10 @@ odoo.define('pos_retail.synchronization', function (require) {
             }
             return {
                 'user': {
-                    'id': user.id,
-                    'name': user.name
-                },
-                'pos': {
-                    'id': this.config.id,
-                    'name': this.config.name
-                },
-                'date': new Date().toLocaleTimeString()
+                    'id': user.id, 'name': user.name
+                }, 'pos': {
+                    'id': this.config.id, 'name': this.config.name
+                }, 'date': new Date().toLocaleTimeString()
             }
         },
 
@@ -904,9 +887,7 @@ odoo.define('pos_retail.synchronization', function (require) {
                 this.bind('add', function (order) {
                     if (order.get_allow_sync()) {
                         self.pos.pos_bus.send_notification({
-                            data: order.export_as_JSON(),
-                            action: 'new_order',
-                            order_uid: order.uid
+                            data: order.export_as_JSON(), action: 'new_order', order_uid: order.uid
                         });
                     }
                     if (self.pos.config.pos_order_tracking) {
@@ -924,10 +905,7 @@ odoo.define('pos_retail.synchronization', function (require) {
                     console.error("Warning, order " + order.uid + " just remove by user")
                     if (order.get_allow_sync() && !self.pos.paid_order) {
                         self.pos.pos_bus.send_notification({
-                            data: order.uid,
-                            action: 'unlink_order',
-                            order_uid: order.uid,
-                            user: self.pos.user.name,
+                            data: order.uid, action: 'unlink_order', order_uid: order.uid, user: self.pos.user.name,
                         });
                     }
                     if (!self.pos.paid_order) {
@@ -944,8 +922,7 @@ odoo.define('pos_retail.synchronization', function (require) {
                             args: [[], order.tracking_ids],
                             kwargs: {context: self.pos.session.user_context},
                         }, {
-                            timeout: 60000,
-                            shadow: true
+                            timeout: 60000, shadow: true
                         }).then(function (server_ids) {
                             return server_ids;
                         }).catch(function (error) {
@@ -973,16 +950,12 @@ odoo.define('pos_retail.synchronization', function (require) {
             }
             this.bind('remove', function (order) {
                 this.saveLogActionOfOrder({
-                    'uid': order['uid'],
-                    'order_json': order.export_as_JSON(),
-                    'action': 'Removed',
+                    'uid': order['uid'], 'order_json': order.export_as_JSON(), 'action': 'Removed',
                 })
             });
             this.bind('add', function (order) {
                 this.saveLogActionOfOrder({
-                    'uid': order['uid'],
-                    'order_json': order.export_as_JSON(),
-                    'action': 'Create New',
+                    'uid': order['uid'], 'order_json': order.export_as_JSON(), 'action': 'Create New',
                 })
             });
             return this;
@@ -996,23 +969,18 @@ odoo.define('pos_retail.synchronization', function (require) {
             vals['config_id'] = this.pos.config.id
             vals['session_id'] = this.pos.pos_session.id
             return rpc.query({
-                model: 'pos.order.log',
-                method: 'saveLogActionOfOrder',
-                args: [[], vals]
+                model: 'pos.order.log', method: 'saveLogActionOfOrder', args: [[], vals]
             }, {
-                shadow: true,
-                timeout: 60000
+                shadow: true, timeout: 60000
             })
-        },
-        get_order_session_info: function () {
+        }, get_order_session_info: function () {
             if (this.session_info) {
                 return this.session_info
             } else {
                 this.session_info = this.pos.session_info();
                 return this.session_info
             }
-        },
-        init_from_JSON: function (json) {
+        }, init_from_JSON: function (json) {
             this.syncing = json.syncing;
             _super_order.init_from_JSON.apply(this, arguments);
             this.uid = json.uid;
@@ -1034,8 +1002,7 @@ odoo.define('pos_retail.synchronization', function (require) {
                 this.tracking_ids = json.tracking_ids
             }
             this.syncing = false;
-        },
-        export_as_JSON: function () {
+        }, export_as_JSON: function () {
             let json = _super_order.export_as_JSON.apply(this, arguments);
             if (this.session_info) {
                 json.session_info = this.session_info;
@@ -1056,41 +1023,28 @@ odoo.define('pos_retail.synchronization', function (require) {
                 json.tracking_ids = this.tracking_ids
             }
             return json;
-        },
-        finalize: function () {
+        }, finalize: function () {
             this.pos.paid_order = true;
             _super_order.finalize.apply(this, arguments)
             this.pos.paid_order = false;
             if (this.get_allow_sync()) {
                 this.pos.pos_bus.send_notification({
-                    data: this.uid,
-                    action: 'paid_order',
-                    order_uid: this.uid,
-                    user: this.pos.user.name,
+                    data: this.uid, action: 'paid_order', order_uid: this.uid, user: this.pos.user.name,
                 });
                 if (this.table && this.table.locked) {
                     this.pos_bus.send_notification({
                         data: {
-                            order: this.export_as_JSON(),
-                            table_id: this.table.id,
-                            order_uid: this.uid,
-                            lock: false,
-                        },
-                        action: 'lock_table',
-                        order_uid: this.uid,
+                            order: this.export_as_JSON(), table_id: this.table.id, order_uid: this.uid, lock: false,
+                        }, action: 'lock_table', order_uid: this.uid,
                     })
                 }
             }
             this.saveLogActionOfOrder({
-                'uid': this['uid'],
-                'order_json': this.export_as_JSON(),
-                'action': 'Paid Successfully',
+                'uid': this['uid'], 'order_json': this.export_as_JSON(), 'action': 'Paid Successfully',
             })
-        },
-        get_session_info: function () {
+        }, get_session_info: function () {
             return this.session_info;
-        },
-        set_client: function (client) {
+        }, set_client: function (client) {
             let self = this;
             let order = this.pos.get_order();
             let res = _super_order.set_client.apply(this, arguments);
@@ -1160,39 +1114,29 @@ odoo.define('pos_retail.synchronization', function (require) {
                 if (client) {
                     this.pos.pos_bus.send_notification({
                         data: {
-                            uid: order['uid'],
-                            partner_id: client.id
-                        },
-                        action: 'set_client',
-                        order_uid: order.uid,
+                            uid: order['uid'], partner_id: client.id
+                        }, action: 'set_client', order_uid: order.uid,
                     });
                 }
                 if (!client) {
                     this.pos.pos_bus.send_notification({
                         data: {
-                            uid: order['uid'],
-                            partner_id: null
-                        },
-                        action: 'set_client',
-                        order_uid: order.uid
+                            uid: order['uid'], partner_id: null
+                        }, action: 'set_client', order_uid: order.uid
                     });
                 }
             }
             this.saveLogActionOfOrder({
-                'uid': this['uid'],
-                'order_json': this.export_as_JSON(),
-                'action': 'Set Customer',
+                'uid': this['uid'], 'order_json': this.export_as_JSON(), 'action': 'Set Customer',
             })
             return res;
-        },
-        get_allow_sync: function () {
+        }, get_allow_sync: function () {
             if (this.pos.pos_bus && (this.syncing != true || !this.syncing) && this.pos.pos_bus && this.pos.the_first_load == false) {
                 return true
             } else {
                 return false
             }
-        },
-        set_pricelist: function (pricelist) {
+        }, set_pricelist: function (pricelist) {
             if (!this.is_return) {
                 _super_order.set_pricelist.apply(this, arguments);
             } else {
@@ -1204,11 +1148,8 @@ odoo.define('pos_retail.synchronization', function (require) {
             if (this.get_allow_sync() && this.uid) {
                 this.pos.pos_bus.send_notification({
                     data: {
-                        uid: this['uid'],
-                        pricelist_id: pricelist['id']
-                    },
-                    action: 'change_pricelist',
-                    order_uid: this.uid,
+                        uid: this['uid'], pricelist_id: pricelist['id']
+                    }, action: 'change_pricelist', order_uid: this.uid,
                 });
             }
             return true
@@ -1237,9 +1178,7 @@ odoo.define('pos_retail.synchronization', function (require) {
             }
             this.bind('remove', function () {
                 this.order.saveLogActionOfOrder({
-                    'uid': this.order['uid'],
-                    'order_json': this.order.export_as_JSON(),
-                    'action': 'Remove Line',
+                    'uid': this.order['uid'], 'order_json': this.order.export_as_JSON(), 'action': 'Remove Line',
                 })
                 if (this.pos.config.pos_order_tracking) {
                     this.order.tracking_ids.push({
@@ -1252,8 +1191,7 @@ odoo.define('pos_retail.synchronization', function (require) {
                 }
             });
             return res;
-        },
-        init_from_JSON: function (json) {
+        }, init_from_JSON: function (json) {
             if (json['pack_lot_ids']) {
                 json.pack_lot_ids = [];
             }
@@ -1261,15 +1199,13 @@ odoo.define('pos_retail.synchronization', function (require) {
             this.uid = json.uid;
             this.session_info = json.session_info;
             return res;
-        },
-        export_as_JSON: function () {
+        }, export_as_JSON: function () {
             let json = _super_order_line.export_as_JSON.apply(this, arguments);
             json.uid = this.uid;
             json.session_info = this.session_info;
             json.order_uid = this.order.uid;
             return json;
-        },
-        merge: function (orderline) {
+        }, merge: function (orderline) {
             _super_order_line.merge.apply(this, arguments);
             orderline.trigger_line_removing();
         },
@@ -1280,19 +1216,15 @@ odoo.define('pos_retail.synchronization', function (require) {
             } else {
                 return false
             }
-        },
-        set_line_note: function (note) {
+        }, set_line_note: function (note) {
             _super_order_line.set_line_note.apply(this, arguments);
             if (this.get_allow_sync()) {
                 this.trigger_update_line();
             }
             this.order.saveLogActionOfOrder({
-                'uid': this.order['uid'],
-                'order_json': this.order.export_as_JSON(),
-                'action': 'Set Line Note',
+                'uid': this.order['uid'], 'order_json': this.order.export_as_JSON(), 'action': 'Set Line Note',
             })
-        },
-        set_quantity: function (quantity, keep_price) {
+        }, set_quantity: function (quantity, keep_price) {
             if (quantity == undefined) {
                 quantity = 1
                 console.error('quantity is zero !!!')
@@ -1304,9 +1236,7 @@ odoo.define('pos_retail.synchronization', function (require) {
             }
             if (!this.pos.the_first_load && this.pos.config.pos_order_tracking) {
                 this.order.saveLogActionOfOrder({
-                    'uid': this.order['uid'],
-                    'order_json': this.order.export_as_JSON(),
-                    'action': 'Set Quantity',
+                    'uid': this.order['uid'], 'order_json': this.order.export_as_JSON(), 'action': 'Set Quantity',
                 })
                 setTimeout(function () {
                     self.order.tracking_ids.push({
@@ -1320,17 +1250,14 @@ odoo.define('pos_retail.synchronization', function (require) {
 
             }
             return res
-        },
-        set_discount: function (discount) {
+        }, set_discount: function (discount) {
             _super_order_line.set_discount.apply(this, arguments);
             if (!this.pos.the_first_load && this.get_allow_sync()) {
                 this.trigger_update_line();
             }
             if (!this.pos.the_first_load && this.pos.config.pos_order_tracking) {
                 this.order.saveLogActionOfOrder({
-                    'uid': this.order['uid'],
-                    'order_json': this.order.export_as_JSON(),
-                    'action': 'Set Discount',
+                    'uid': this.order['uid'], 'order_json': this.order.export_as_JSON(), 'action': 'Set Discount',
                 })
                 if (!this.order.tracking_ids) {
                     this.order.tracking_ids = []
@@ -1343,73 +1270,58 @@ odoo.define('pos_retail.synchronization', function (require) {
                     'time_action': new Date()
                 })
             }
-        },
-        set_unit_price: function (price) {
+        }, set_unit_price: function (price) {
             _super_order_line.set_unit_price.apply(this, arguments);
             if (this.get_allow_sync()) {
                 this.trigger_update_line();
             }
-        },
-        set_tags: function (tag_ids) {
+        }, set_tags: function (tag_ids) {
             _super_order_line.set_tags.apply(this, arguments);
             if (this.get_allow_sync()) {
                 this.trigger_update_line();
             }
-        },
-        set_sale_person: function (seller) {
+        }, set_sale_person: function (seller) {
             _super_order_line.set_sale_person.apply(this, arguments);
             if (this.get_allow_sync()) {
                 this.trigger_update_line();
             }
-        },
-        set_variants: function (variant_ids) {
+        }, set_variants: function (variant_ids) {
             _super_order_line.set_variants.apply(this, arguments);
             if (this.get_allow_sync()) {
                 this.trigger_update_line();
             }
-        },
-        set_unit: function (uom_id) {
+        }, set_unit: function (uom_id) {
             _super_order_line.set_unit.apply(this, arguments);
             if (this.get_allow_sync()) {
                 this.trigger_update_line();
             }
-        },
-        set_taxes: function (tax_ids) {
+        }, set_taxes: function (tax_ids) {
             _super_order_line.set_taxes.apply(this, arguments);
             if (this.get_allow_sync()) {
                 this.trigger_update_line();
             }
-        },
-        set_dynamic_combo_items: function (selected_combo_items) {
+        }, set_dynamic_combo_items: function (selected_combo_items) {
             _super_order_line.set_dynamic_combo_items.apply(this, arguments);
             if (this.get_allow_sync()) {
                 this.trigger_update_line();
             }
-        },
-        trigger_update_line: function () {
+        }, trigger_update_line: function () {
             if (this.get_allow_sync()) {
                 this.pos.pos_bus.queue_sync_order_line_by_uid[this.uid] = {
-                    action: 'trigger_update_line',
-                    data: {
-                        uid: this.uid,
-                        line: this.export_as_JSON()
-                    },
-                    order_uid: this.order.uid
+                    action: 'trigger_update_line', data: {
+                        uid: this.uid, line: this.export_as_JSON()
+                    }, order_uid: this.order.uid
                 }
             }
-        },
-        trigger_line_removing: function () {
+        }, trigger_line_removing: function () {
             if (this.get_allow_sync()) {
                 this.pos.pos_bus.queue_sync_order_line_by_uid[this.uid] = {
-                    action: 'line_removing',
-                    data: {
+                    action: 'line_removing', data: {
                         uid: this.uid,
-                    },
-                    order_uid: this.order.uid
+                    }, order_uid: this.order.uid
                 };
             }
-        },
-        can_be_merged_with: function (orderline) {
+        }, can_be_merged_with: function (orderline) {
             let merge = _super_order_line.can_be_merged_with.apply(this, arguments);
             if (orderline.seller && this.seller && orderline.seller.id != this.seller.id) {
                 return false

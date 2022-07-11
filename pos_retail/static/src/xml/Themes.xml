@@ -76,6 +76,12 @@
         </xpath>
     </t>
 
+    <t t-name="FeatureButtons" t-inherit="pos_retail.FeatureButtons" t-inherit-mode="extension" owl="1">
+        <xpath expr="//div[hasclass('control-buttons')]" position="attributes">
+            <attribute name="t-att-style">'background:' +  env.session.config.product_screen_background</attribute>
+        </xpath>
+    </t>
+
     <t t-name="RetailProductItem" t-inherit="pos_retail.RetailProductItem" t-inherit-mode="extension" owl="1">
         <xpath expr="//img" position="replace">
             <t t-if="env.session.config.display_product_image != 'none'">

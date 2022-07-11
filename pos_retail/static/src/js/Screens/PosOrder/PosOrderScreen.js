@@ -208,9 +208,17 @@ odoo.define('pos_retail.PosOrderScreen', function (require) {
             this.deactivateEditMode();
         }
 
+        _getDomainSearchPosOrder() {
+            if (this.env.pos.config.pos_orders_load_orders_another_pos) {
+                return [['state', '!=', 'cancel']]
+            } else {
+                return [['pos_config_id', '=', this.env.pos.config.id], ['state', '!=', 'cancel']]
+            }
+        }
+
         async clearSearch() {
             this.state.loading = true
-            await this.env.pos.getPosOrders()
+            await this.env.pos.getPosOrders(this._getDomainSearchPosOrder())
             this._initializeSearchFieldConstants()
             this.searchDetails = {};
             this.state.editModeProps = {
@@ -326,7 +334,7 @@ odoo.define('pos_retail.PosOrderScreen', function (require) {
                     model: orderObject.model,
                     method: 'search_read',
                     fields: orderObject.fields,
-                    domain: ['|', '|', ['name', 'ilike', searchInput], ['pos_reference', 'ilike', searchInput], ['ean13', 'ilike', searchInput]]
+                    domain: ['|', '|', '|', ['name', 'ilike', searchInput], ['pos_reference', 'ilike', searchInput], ['ean13', 'ilike', searchInput], ['partner_id.name', 'ilike', searchInput]]
                 }).then(function (orders) {
                     return orders
                 }, function (error) {

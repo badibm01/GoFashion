@@ -9,3 +9,4 @@ from . import purchase_report
 from . import product_quantity_available_report
 from . import report_stock_excel
 from . import pos_tracking_client
+from . import report_sale_detail

@@ -36,6 +36,9 @@ class PosApproveAction(models.Model):
         ('discount_change', 'Discount Change'),
         ('out_stock', 'Out of Stock')
     ], default='price_change', required=1, readonly=1)
+    cost_price = fields.Float('Cost Price')
+    last_price = fields.Float('Last Price')
+    current_price = fields.Float('Current Price')
 
     def remove_from_ui(self, action_id):
         records = self.sudo().search([('id', '=', action_id)])
